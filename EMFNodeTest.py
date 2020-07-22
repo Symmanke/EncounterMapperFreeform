@@ -53,22 +53,23 @@ class EMFNodeTest(QWidget):
         self.currentMousePos = EMFNode(0, 0)
 
         self.nodes.append(EMFNode(100, 100))
-        self.nodes.append(EMFNode(140, 200))
-        self.lines.append(EMFLine(self.nodes[0], self.nodes[1]))
         self.nodes.append(EMFNode(200, 100))
-        self.nodes.append(EMFNode(100, 150))
+        self.nodes.append(EMFNode(200, 200))
+        self.nodes.append(EMFNode(100, 200))
         self.shapes.append(EMFShape(self.nodes))
-
-        for addedLine in self.shapes[0].lines():
-            if addedLine not in self.lines:
-                self.lines.append(addedLine)
-            else:
-                print("We've already got one!")
+        self.addShapeLines(self.shapes[-1])
 
         self.setMouseTracking(True)
 
         testList = [EMFNode(10, 10)]
         print(EMFNode(10, 10) in testList)
+
+    def addShapeLines(self, shape):
+        for addedLine in shape.lines():
+            if addedLine not in self.lines:
+                self.lines.append(addedLine)
+            else:
+                print("We've already got one!")
 
     # //////////// #
     # INTERACTIONS #
@@ -125,6 +126,20 @@ class EMFNodeTest(QWidget):
     def clearSelectedItems(self):
         self.selectedItems.clear()
         self.medianNode = None
+
+    def formItem(self):
+        if self.interactMode == EMFNodeTest.INTERACT_SELECT:
+            # shape is too complex; save logic for later
+            if self.selectedType != EMFNodeTest.SELECT_TYPE_SHAPE:
+                nodes = EMFNodeHelper.listOfNodes(self.selectedItems)
+                if (len(nodes) == 2 and
+                        len(EMFNodeHelper.existingLine(
+                        nodes[0], nodes[1])) == 0):
+                    self.lines.append(EMFLine(nodes[0], nodes[1]))
+                elif len(nodes) > 2:
+                    self.shapes.append(EMFShape(nodes))
+                    self.addShapeLines(self.shapes[-1])
+                    pass
 
     def extrudeItems(self):
         if self.interactMode == EMFNodeTest.INTERACT_SELECT:
@@ -331,6 +346,8 @@ class EMFNodeTest(QWidget):
         elif (event.key() == Qt.Key_E
               and self.interactMode == EMFNodeTest.INTERACT_SELECT):
             self.extrudeItems()
+        elif event.key() == Qt.Key_F:
+            self.formItem()
             # # TODO:
 
         self.repaint()
