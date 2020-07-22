@@ -1,0 +1,366 @@
+"""
+Encounter Mapper Freeform is a node-based encounter map creator for tabletop
+RPGs. Copyright 2020 Eric Symmank
+
+This file is part of Encounter Mapper Freeform.
+
+Encounter Mapper Freeform is free software: you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the License,
+or (at your option) any later version.
+
+Encounter Mapper Freeform is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Encounter Mapper Freeform.
+If not, see <https://www.gnu.org/licenses/>.
+"""
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPainter
+from PyQt5.QtWidgets import (QApplication, QWidget)
+
+import math
+
+from EMFNodes import EMFNode, EMFShape, EMFLine, EMFNodeHelper
+
+
+class EMFNodeTest(QWidget):
+    SELECT_TYPE_NODE = "NODE"
+    SELECT_TYPE_LINE = "LINE"
+    SELECT_TYPE_SHAPE = "SHAPE"
+
+    INTERACT_SELECT = "SELECT"
+    INTERACT_GRAB = "GRAB"
+    INTERACT_ROTATE = "ROTATE"
+    INTERACT_SCALE = "SCALE"
+
+    def __init__(self):
+        super(EMFNodeTest, self).__init__()
+        self.nodes = []
+        self.lines = []
+        self.shapes = []
+        self.selectedType = EMFNodeTest.SELECT_TYPE_NODE
+        self.selectedItems = []
+        self.selectedNodes = None
+        self.medianNode = None
+        self.formerMedian = None
+        self.interactMode = EMFNodeTest.INTERACT_SELECT
+        self.interactNode = None
+        self.currentMousePos = EMFNode(0, 0)
+
+        self.nodes.append(EMFNode(100, 100))
+        self.nodes.append(EMFNode(140, 200))
+        self.lines.append(EMFLine(self.nodes[0], self.nodes[1]))
+        self.nodes.append(EMFNode(200, 100))
+        self.nodes.append(EMFNode(100, 150))
+        self.shapes.append(EMFShape(self.nodes))
+
+        for addedLine in self.shapes[0].lines():
+            if addedLine not in self.lines:
+                self.lines.append(addedLine)
+            else:
+                print("We've already got one!")
+
+        self.setMouseTracking(True)
+
+    # //////////// #
+    # INTERACTIONS #
+    # //////////// #
+
+    # Select a singular item to add to existing items.
+    def selectItem(self, inclusiveSelect=False):
+        selections = {EMFNodeTest.SELECT_TYPE_NODE: self.nodes,
+                      EMFNodeTest.SELECT_TYPE_LINE: self.lines,
+                      EMFNodeTest.SELECT_TYPE_SHAPE: self.shapes}
+        itemTypeList = selections[self.selectedType]
+        selectedItem = None
+        for item in itemTypeList:
+            if (item.inSelectRange(self.currentMousePos)
+                    and item not in self.selectedItems):
+                selectedItem = item
+                break
+        if not inclusiveSelect:
+            self.selectedItems.clear()
+        if selectedItem is not None:
+            self.selectedItems.append(selectedItem)
+        self.updateMedianPoint()
+
+    # deselect either a singlular or all selected items
+    def deselectItem(self, singleDeselect=False):
+        if singleDeselect:
+            selections = {EMFNodeTest.SELECT_TYPE_NODE: self.nodes,
+                          EMFNodeTest.SELECT_TYPE_LINE: self.lines,
+                          EMFNodeTest.SELECT_TYPE_SHAPE: self.shapes}
+            itemTypeList = selections[self.selectedType]
+            for item in itemTypeList:
+                if (item.inSelectRange(self.currentMousePos)
+                        and item in self.selectedItems):
+                    self.selectedItems.remove(item)
+                    break
+        else:
+            self.selectedItems.clear()
+        self.updateMedianPoint()
+
+    # toggle between selecting all and no nodes
+    def selectAll(self):
+        selections = {EMFNodeTest.SELECT_TYPE_NODE: self.nodes,
+                      EMFNodeTest.SELECT_TYPE_LINE: self.lines,
+                      EMFNodeTest.SELECT_TYPE_SHAPE: self.shapes}
+        itemTypeList = selections[self.selectedType]
+        if len(itemTypeList) == len(self.selectedItems):
+            self.selectedItems.clear()
+        else:
+            self.selectedItems.clear()
+            self.selectedItems.extend(itemTypeList)
+        self.updateMedianPoint()
+
+    # remove all items from selectedItems
+    def clearSelectedItems(self):
+        self.selectedItems.clear()
+        self.medianNode = None
+
+    def extrudeItems(self):
+        pass
+
+    def extrudeNodes(self):
+        pass
+
+    def extrudeLines(self):
+        pass
+
+    def extrudeFaces(self):
+        pass
+
+        # update to a new median point. should do when grabbing nodes, or chaning
+        # the number of selected items
+
+    def updateMedianPoint(self):
+        if len(self.selectedItems) > 0:
+            self.medianNode = EMFNodeHelper.medianNode(self.selectedItems)
+        else:
+            self.medianNode = None
+
+    # switch between the types of selection (Node, Line, Shape)
+    def changeSelectionType(self, selectionType):
+        if (self.selectedType != selectionType
+                and self.interactMode == EMFNodeTest.INTERACT_SELECT):
+            self.selectedType = selectionType
+            self.clearSelectedItems()
+
+    # drag the selected nodes based on the offset between the initial mouse
+    # position and current one
+    def interactGrab(self):
+        offset = (self.currentMousePos.x() - self.interactNode.x(),
+                  self.currentMousePos.y() - self.interactNode.y())
+        for node in self.selectedNodes:
+            node.grab(offset)
+            self.updateMedianPoint()
+
+    # Rotate the selected nodes around the median using a delta of the initial
+    # mouse angle and current
+    def interactRotate(self):
+        oldDelta = EMFNodeHelper.nodeAngles(
+            self.formerMedian, self.interactNode)
+        newDelta = EMFNodeHelper.nodeAngles(
+            self.formerMedian, self.currentMousePos)
+        delta = newDelta - oldDelta
+        for node in self.selectedNodes:
+            node.rotate(delta - 90)
+
+    # Scale the selected nodes based off a ratio of the initial mouse pos and
+    # current pos
+    def interactScale(self):
+        # get a ratio of the two distances
+        oldDist = math.sqrt(EMFNodeHelper.nodeDistanceSqr(
+            self.formerMedian, self.interactNode))
+        oldDist = 0.1 if oldDist == 0 else oldDist
+        newDist = math.sqrt(EMFNodeHelper.nodeDistanceSqr(
+            self.formerMedian, self.currentMousePos))
+        ratio = newDist / oldDist
+        for node in self.selectedNodes:
+            node.scale(ratio)
+
+    # helper method to navigate to the correct interaction
+    def updateInteraction(self):
+        selections = {EMFNodeTest.INTERACT_GRAB: self.interactGrab,
+                      EMFNodeTest.INTERACT_ROTATE: self.interactRotate,
+                      EMFNodeTest.INTERACT_SCALE: self.interactScale}
+        if self.interactMode in selections:
+            selections[self.interactMode]()
+
+    # Helper cleanup before beginning an interaction (Grab, Scale, Rotate)
+    def beginInteraction(self, interactionType):
+        if (self.interactMode != interactionType
+                and len(self.selectedItems) > 0):
+            if self.interactMode != EMFNodeTest.INTERACT_SELECT:
+                # cancel previous interaction
+                self.cancelInteraction()
+            self.interactMode = interactionType
+            self.formerMedian = self.medianNode
+            # Produce a node based off my last mouse position
+            self.interactNode = self.currentMousePos
+            self.selectedNodes = EMFNodeHelper.listOfNodes(self.selectedItems)
+            for node in self.selectedNodes:
+                node.beginTransform(self.medianNode)
+
+    # Reset node info to state before interaction began
+    def cancelInteraction(self):
+        self.interactMode = EMFNodeTest.INTERACT_SELECT
+        for node in self.selectedNodes:
+            node.cancelTransform()
+        self.selectedNodes = None
+        self.interactNode = None
+        self.formerMedian = None
+        self.updateMedianPoint()
+
+    # Apply interaction changes
+    def applyInteraction(self):
+        self.interactMode = EMFNodeTest.INTERACT_SELECT
+        for node in self.selectedNodes:
+            node.applyTransform()
+        self.selectedNodes = None
+        self.interactNode = None
+        self.formerMedian = None
+        self.updateMedianPoint()
+
+    # ////// #
+    # EVENTS #
+    # ////// #
+
+    def mousePressEvent(self, event):
+        if self.interactMode == EMFNodeTest.INTERACT_SELECT:
+            modifiers = QApplication.keyboardModifiers()
+            if event.buttons() == Qt.LeftButton:
+                self.selectItem(modifiers == Qt.ShiftModifier)
+            elif event.buttons() == Qt.RightButton:
+                self.deselectItem(modifiers == Qt.ShiftModifier)
+        else:
+            if event.buttons() == Qt.LeftButton:
+                self.applyInteraction()
+            elif event.buttons() == Qt.RightButton:
+                self.cancelInteraction()
+        self.repaint()
+
+    # def mouseReleaseEvent(self, event):
+    #     pass
+
+    def mouseMoveEvent(self, event):
+        pos = event.pos()
+        self.currentMousePos = EMFNode(pos.x(), pos.y())
+        if self.interactMode == EMFNodeTest.INTERACT_SELECT:
+            pass
+        else:
+            self.updateInteraction()
+        self.repaint()
+
+    # Handle the key presses here.
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_1:
+            self.changeSelectionType(EMFNodeTest.SELECT_TYPE_NODE)
+        elif event.key() == Qt.Key_2:
+            self.changeSelectionType(EMFNodeTest.SELECT_TYPE_LINE)
+        elif event.key() == Qt.Key_3:
+            self.changeSelectionType(EMFNodeTest.SELECT_TYPE_SHAPE)
+        elif event.key() == Qt.Key_G:
+            self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
+        elif event.key() == Qt.Key_S:
+            self.beginInteraction(EMFNodeTest.INTERACT_SCALE)
+        elif event.key() == Qt.Key_R:
+            self.beginInteraction(EMFNodeTest.INTERACT_ROTATE)
+        elif (event.key() == Qt.Key_A
+              and self.interactMode == EMFNodeTest.INTERACT_SELECT):
+            self.selectAll()
+        elif (event.key() == Qt.Key_E
+              and self.interactMode == EMFNodeTest.INTERACT_SELECT):
+            # # TODO:
+            pass
+
+        self.repaint()
+
+    def paintEvent(self, paintEvent):
+        painter = QPainter(self)
+        painter.setPen(Qt.black)
+        painter.drawText(10, 10, self.selectedType)
+        painter.drawText(10, 20, self.interactMode)
+        self.drawShapes(painter)
+        self.drawLines(painter)
+        self.drawNodes(painter)
+
+        self.drawMedianNode(painter)
+        self.drawInteractionNode(painter)
+        painter.drawText(50, 10, "{}".format(self.currentMousePos))
+        if self.interactMode == EMFNodeTest.INTERACT_ROTATE:
+            newDelta = EMFNodeHelper.nodeAngles(
+                self.formerMedian, self.currentMousePos)
+            painter.drawText(10, 30, "{}".format(newDelta))
+
+    # //////////////// #
+    # DRAWING ELEMENTS #
+    # //////////////// #
+
+    # draw the shapes displayed here
+    def drawShapes(self, painter):
+        drawColor = (Qt.blue if self.selectedType ==
+                     EMFNodeTest.SELECT_TYPE_SHAPE else Qt.lightGray)
+
+        for shape in self.shapes:
+            dc = Qt.red if shape in self.selectedItems else drawColor
+            painter.setPen(dc)
+            painter.setBrush(dc)
+            painter.drawPolygon(shape.poly())
+
+    # draw the displayed lines
+    def drawLines(self, painter):
+        drawColor = (Qt.blue if self.selectedType ==
+                     EMFNodeTest.SELECT_TYPE_LINE else Qt.black)
+
+        for line in self.lines:
+            dc = Qt.red if line in self.selectedItems else drawColor
+            painter.setPen(dc)
+            painter.setBrush(dc)
+            nodes = line.nodes()
+            painter.drawLine(nodes[0], nodes[1])
+
+    # draw the displayed nodes
+    def drawNodes(self, painter):
+        drawColor = (Qt.blue if self.selectedType ==
+                     EMFNodeTest.SELECT_TYPE_NODE else Qt.darkGray)
+        radius = 5
+        d = radius * 2
+        for node in self.nodes:
+            dc = Qt.red if node in self.selectedItems else drawColor
+            painter.setPen(dc)
+            painter.setBrush(dc)
+            painter.drawEllipse(node.x()-radius, node.y()-radius, d, d)
+
+    def drawMedianNode(self, painter):
+        if self.medianNode is not None:
+            radius = 5
+            d = radius * 2
+            painter.setBrush(Qt.darkRed)
+            painter.setPen(Qt.black)
+            painter.drawEllipse(
+                self.medianNode.x()-radius, self.medianNode.y()-radius, d, d)
+
+    def drawInteractionNode(self, painter):
+        painter.setPen(Qt.darkRed)
+        if self.interactMode == EMFNodeTest.INTERACT_GRAB:
+            painter.drawLine(self.formerMedian, self.medianNode)
+        elif (self.interactMode == EMFNodeTest.INTERACT_SCALE
+              or self.interactMode == EMFNodeTest.INTERACT_ROTATE):
+            painter.drawLine(self.formerMedian, self.currentMousePos)
+
+
+def main():
+    app = QApplication([])
+    mainWidget = EMFNodeTest()
+    mainWidget.show()
+    app.exec_()
+
+
+if __name__ == "__main__":
+    main()
