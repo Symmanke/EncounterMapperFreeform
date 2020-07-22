@@ -26,58 +26,82 @@ import operator
 import math
 
 
-class EMFNode(QPoint):
+class EMFNode:
     def __init__(self, x, y):
-        super(EMFNode, self).__init__(x, y)
+        # super(EMFNode, self).__init__(x, y)
+        self.nPoint = QPoint(x, y)
         self.lines = []
         self.shapes = []
 
-        self.tempX = self.x()
-        self.tempY = self.y()
+        self.tempX = self.nPoint.x()
+        self.tempY = self.nPoint.y()
 
         self.transforming = False
         self.offsetNode = None
+
+    @classmethod
+    def createFromNode(cls, node):
+        return EMFNode(node.x(), node.y())
 
     def beginTransform(self, median):
         if not self.transforming:
             self.transforming = True
 
-            self.offsetNode = EMFNode(self.x() - median.x(),
-                                      self.y() - median.y())
+            self.offsetNode = EMFNode(self.nPoint.x() - median.x(),
+                                      self.nPoint.y() - median.y())
             self.transformComparison = EMFNodeHelper.nodeComparison(
                 median, self, True)
-            self.tempX = self.x()
-            self.tempY = self.y()
+            self.tempX = self.nPoint.x()
+            self.tempY = self.nPoint.y()
 
     def cancelTransform(self):
         self.transforming = False
-        self.setX(self.tempX)
-        self.setY(self.tempY)
+        self.nPoint.setX(self.tempX)
+        self.nPoint.setY(self.tempY)
 
     def applyTransform(self):
         self.transforming = False
 
     def grab(self, offset):
-        self.setX(self.tempX + offset[0])
-        self.setY(self.tempY + offset[1])
+        self.nPoint.setX(self.tempX + offset[0])
+        self.nPoint.setY(self.tempY + offset[1])
 
     def rotate(self, deltaAngle):
         angle = math.radians(self.transformComparison[2] + deltaAngle)
-        self.setX(self.transformComparison[0].x() +
-                  self.transformComparison[3] * math.cos(angle))
-        self.setY(self.transformComparison[0].y() +
-                  self.transformComparison[3] * math.sin(angle))
+        self.nPoint.setX(self.transformComparison[0].x() +
+                         self.transformComparison[3] * math.cos(angle))
+        self.nPoint.setY(self.transformComparison[0].y() +
+                         self.transformComparison[3] * math.sin(angle))
 
     def scale(self, size):
-        self.setX(self.transformComparison[0].x() + self.offsetNode.x()*size)
-        self.setY(self.transformComparison[0].y() + self.offsetNode.y()*size)
+        self.nPoint.setX(self.transformComparison[0].x() +
+                         self.offsetNode.x()*size)
+        self.nPoint.setY(self.transformComparison[0].y() +
+                         self.offsetNode.y()*size)
         pass
+
+    def x(self):
+        return self.nPoint.x()
+
+    def y(self):
+        return self.nPoint.y()
+
+    def point(self):
+        return self.nPoint
 
     def addLine(self, line):
         self.lines.append(line)
 
     def getLines(self):
         return self.lines
+
+    def connectedNodes(self):
+        nodeSet = set()
+        for line in self.lines:
+            nodeSet.update(line.nodes())
+        if self in nodeSet:
+            nodeSet.remove(self)
+        return nodeSet
 
     def removeLine(self, line):
         pass
@@ -133,6 +157,7 @@ class EMFShape:
             nodes = []
             for sNode in sorted:
                 nodes.append(sNode[1])
+        nodes = EMFNodeHelper.sortByLine(nodes)
         self.shapeNodes = nodes
         self.shapeLines = []
         self.shapeUpdating = True
@@ -145,11 +170,21 @@ class EMFShape:
             else:
                 self.shapeLines.append(line.pop())
             lastNode = node
-        self.nodePoly = QPolygon(self.shapeNodes)
+        nps = []
+        for node in self.shapeNodes:
+            nps.append(node.point())
+        self.nodePoly = QPolygon(nps)
+
+    @classmethod
+    def createFromLines(cls, lines):
+        return EMFShape(EMFNodeHelper.listOfNodes(lines))
 
     def poly(self):
         if self.shapeUpdating:
-            self.nodePoly = QPolygon(self.shapeNodes)
+            nps = []
+            for node in self.shapeNodes:
+                nps.append(node.point())
+            self.nodePoly = QPolygon(nps)
         return self.nodePoly
 
     def nodes(self):
@@ -165,7 +200,7 @@ class EMFShape:
         self.shapeUpdating = update
 
     def inSelectRange(self, point, threshold=100):
-        return self.nodePoly.containsPoint(point, Qt.OddEvenFill)
+        return self.nodePoly.containsPoint(point.point(), Qt.OddEvenFill)
 
 
 class EMFNodeHelper:
@@ -216,15 +251,17 @@ class EMFNodeHelper:
     # Create a node that is the median of all other nodes in the list
     @classmethod
     def medianNode(cls, itemList):
-        avgNode = EMFNode(0, 0)
+        avgNode = QPoint(0, 0)
         nodeList = cls.listOfNodes(itemList)
 
         for node in nodeList:
-            avgNode = avgNode + node
-        return avgNode / len(nodeList)
+            avgNode = avgNode + node.point()
+        avgNode /= len(nodeList)
+        return EMFNode(avgNode.x(), avgNode.y())
 
     @classmethod
     def listOfNodes(cls, itemList):
+
         nodeList = []
         for item in itemList:
             if isinstance(item, EMFNode):
@@ -238,6 +275,7 @@ class EMFNodeHelper:
                 for node in item.nodes():
                     if node not in nodeList:
                         nodeList.append(node)
+
         return nodeList
 
     # Sort a group of nodes primarily by the angles centered around median,
@@ -251,10 +289,37 @@ class EMFNodeHelper:
         return sorted(nodeCmpList, key=operator.itemgetter(2, 3))
 
     @classmethod
-    def closestPointOnSegment(cls, p, line):
+    def sortByLine(cls, nodes):
+        print("BEGIN LINE SORT")
+        sorted = []
+        nodes.reverse()
+        # Check if there are any existing lines in this
+        cIndex = -1
+        while len(nodes) > 0:
+
+            node = nodes.pop(cIndex)
+            cIndex = -1
+            sorted.append(node)
+            connections = node.connectedNodes()
+
+            for node in list(connections.intersection(nodes)):
+                # find the closest connection
+                i = nodes.index(node)
+                print("index: {}".format(i))
+                if cIndex == -1:
+                    cIndex = i
+                elif i > cIndex:
+                    cIndex = i
+
+        return sorted
+
+    @classmethod
+    def closestPointOnSegment(cls, np, line):
+        p = np.point()
         ln = line.nodes()
-        lineLen = cls.nodeDistanceSqr(ln[0], ln[1])
+        lp = ln[0].point(), ln[1].point()
+        lineLen = cls.nodeDistanceSqr(lp[0], lp[1])
         if lineLen == 0:
             return ln[0]
-        t = max(0, min(1, QPoint.dotProduct(p-ln[0], ln[1]-ln[0])/lineLen))
-        return ln[0] + t * (ln[1] - ln[0])
+        t = max(0, min(1, QPoint.dotProduct(p-lp[0], lp[1]-lp[0])/lineLen))
+        return lp[0] + t * (lp[1] - lp[0])

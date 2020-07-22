@@ -67,6 +67,9 @@ class EMFNodeTest(QWidget):
 
         self.setMouseTracking(True)
 
+        testList = [EMFNode(10, 10)]
+        print(EMFNode(10, 10) in testList)
+
     # //////////// #
     # INTERACTIONS #
     # //////////// #
@@ -124,19 +127,70 @@ class EMFNodeTest(QWidget):
         self.medianNode = None
 
     def extrudeItems(self):
-        pass
+        if self.interactMode == EMFNodeTest.INTERACT_SELECT:
+            if self.selectedType == EMFNodeTest.SELECT_TYPE_NODE:
+                if len(self.selectedItems) > 0:
+                    self.extrudeNodes()
+                else:
+                    self.addNode()
+            if (self.selectedType == EMFNodeTest.SELECT_TYPE_LINE
+                    and len(self.selectedItems) > 0):
+                self.extrudeLines()
 
+    def addNode(self):
+        self.nodes.append(
+            EMFNode(self.currentMousePos.x(), self.currentMousePos.y()))
+        self.selectedItems.clear()
+        self.selectedItems.append(self.nodes[-1])
+        self.updateMedianPoint()
+        self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
+
+    # Form a line out of each Node
     def extrudeNodes(self):
-        pass
+        newNodes = []
+        for node in self.selectedItems:
+            newNodes.append(EMFNode.createFromNode(node))
+            self.nodes.append(newNodes[-1])
+            self.lines.append(EMFLine(node, newNodes[-1]))
+        self.selectedItems.clear()
+        self.selectedItems.extend(newNodes)
+        self.updateMedianPoint()
+        self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
 
+    # form a shape out of each line
     def extrudeLines(self):
-        pass
+        newNodes = []
+        oldNodes = []
+        newLines = []
+        for line in self.selectedItems:
+            lineNodes = []
+            for node in line.nodes():
+                if node not in oldNodes:
+                    dupeNode = EMFNode.createFromNode(node)
+                    newNodes.append(dupeNode)
+                    oldNodes.append(node)
+                    self.lines.append(EMFLine(node, dupeNode))
+                    lineNodes.append(dupeNode)
+                else:
+                    # grab node somewhere else
+                    lineNodes.append(newNodes[oldNodes.index(node)])
+                    # EMFLine(lineNodes[0], lineNodes[1]))
+            newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
+            self.shapes.append(EMFShape.createFromLines((line, newLines[-1])))
 
+        self.lines.extend(newLines)
+        self.nodes.extend(newNodes)
+        self.selectedItems.clear()
+        self.selectedItems.extend(newLines)
+        self.updateMedianPoint()
+        self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
+
+    # Duplicate the shape
     def extrudeFaces(self):
         pass
 
-        # update to a new median point. should do when grabbing nodes, or chaning
-        # the number of selected items
+    # update to a new median point. should do when grabbing nodes, or
+    # chaning the number of selected items
 
     def updateMedianPoint(self):
         if len(self.selectedItems) > 0:
@@ -158,7 +212,7 @@ class EMFNodeTest(QWidget):
                   self.currentMousePos.y() - self.interactNode.y())
         for node in self.selectedNodes:
             node.grab(offset)
-            self.updateMedianPoint()
+        self.updateMedianPoint()
 
     # Rotate the selected nodes around the median using a delta of the initial
     # mouse angle and current
@@ -276,8 +330,8 @@ class EMFNodeTest(QWidget):
             self.selectAll()
         elif (event.key() == Qt.Key_E
               and self.interactMode == EMFNodeTest.INTERACT_SELECT):
+            self.extrudeItems()
             # # TODO:
-            pass
 
         self.repaint()
 
@@ -323,7 +377,7 @@ class EMFNodeTest(QWidget):
             painter.setPen(dc)
             painter.setBrush(dc)
             nodes = line.nodes()
-            painter.drawLine(nodes[0], nodes[1])
+            painter.drawLine(nodes[0].point(), nodes[1].point())
 
     # draw the displayed nodes
     def drawNodes(self, painter):
@@ -349,10 +403,12 @@ class EMFNodeTest(QWidget):
     def drawInteractionNode(self, painter):
         painter.setPen(Qt.darkRed)
         if self.interactMode == EMFNodeTest.INTERACT_GRAB:
-            painter.drawLine(self.formerMedian, self.medianNode)
+            painter.drawLine(self.formerMedian.point(),
+                             self.medianNode.point())
         elif (self.interactMode == EMFNodeTest.INTERACT_SCALE
               or self.interactMode == EMFNodeTest.INTERACT_ROTATE):
-            painter.drawLine(self.formerMedian, self.currentMousePos)
+            painter.drawLine(self.formerMedian.point(),
+                             self.currentMousePos.point())
 
 
 def main():
