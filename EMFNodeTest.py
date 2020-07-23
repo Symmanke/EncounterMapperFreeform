@@ -52,10 +52,10 @@ class EMFNodeTest(QWidget):
         self.interactNode = None
         self.currentMousePos = EMFNode(0, 0)
 
-        self.nodes.append(EMFNode(100, 100))
-        self.nodes.append(EMFNode(200, 100))
-        self.nodes.append(EMFNode(200, 200))
-        self.nodes.append(EMFNode(100, 200))
+        self.nodes.append(EMFNode(72, 72))
+        self.nodes.append(EMFNode(144, 72))
+        self.nodes.append(EMFNode(144, 144))
+        self.nodes.append(EMFNode(72, 144))
         self.shapes.append(EMFShape(self.nodes))
         self.addShapeLines(self.shapes[-1])
 
@@ -146,8 +146,6 @@ class EMFNodeTest(QWidget):
         if self.interactMode == EMFNodeTest.INTERACT_SELECT:
             if deleteTouchingNodes:
                 self.deleteNodes(EMFNodeHelper.listOfNodes(self.selectedItems))
-
-                pass
             else:
                 delMethods = {EMFNodeTest.SELECT_TYPE_NODE: self.deleteNodes,
                               EMFNodeTest.SELECT_TYPE_LINE: self.deleteLines,
@@ -156,7 +154,6 @@ class EMFNodeTest(QWidget):
             self.selectedItems.clear()
             self.updateMedianPoint()
             # delete selectedItems
-        pass
 
     # Delete all selected nodes. also removes all touching lines and shapes
     def deleteNodes(self, nodes):
@@ -256,8 +253,8 @@ class EMFNodeTest(QWidget):
             newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
             self.shapes.append(EMFShape.createFromLines((line, newLines[-1])))
 
-        self.lines.extend(newLines)
         self.nodes.extend(newNodes)
+        self.lines.extend(newLines)
         self.selectedItems.clear()
         self.selectedItems.extend(newLines)
         self.updateMedianPoint()
@@ -267,9 +264,72 @@ class EMFNodeTest(QWidget):
     def extrudeFaces(self):
         pass
 
+    def duplicateItems(self):
+        if self.interactMode == EMFNodeTest.INTERACT_SELECT:
+            dupeMethods = {EMFNodeTest.SELECT_TYPE_NODE: self.duplicateNodes,
+                           EMFNodeTest.SELECT_TYPE_LINE: self.duplicateLines,
+                           EMFNodeTest.SELECT_TYPE_SHAPE: self.duplicateShapes}
+            dupeMethods[self.selectedType](self.selectedItems)
+            self.updateMedianPoint()
+            self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
+
+    # duplicate a selected series of nodes. doesn't duplicate the connected
+    # lines or shapes
+    def duplicateNodes(self, nodes):
+        newNodes = []
+        for node in nodes:
+            newNodes.append(EMFNode.createFromNode(node))
+        self.nodes.extend(newNodes)
+        self.selectedItems.clear()
+        self.selectedItems.extend(newNodes)
+
+    # Duplicate a series of lines. doesn't duplicate the shapes
+    def duplicateLines(self, lines):
+        newNodes = []
+        oldNodes = []
+        newLines = []
+        for line in lines:
+            lineNodes = []
+            for node in line.nodes():
+                if node not in oldNodes:
+                    dupeNode = EMFNode.createFromNode(node)
+                    newNodes.append(dupeNode)
+                    oldNodes.append(node)
+                    lineNodes.append(dupeNode)
+                else:
+                    # grab node somewhere else
+                    lineNodes.append(newNodes[oldNodes.index(node)])
+                    # EMFLine(lineNodes[0], lineNodes[1]))
+            newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
+
+        self.nodes.extend(newNodes)
+        self.lines.extend(newLines)
+        self.selectedItems.clear()
+        self.selectedItems.extend(newLines)
+
+    def duplicateShapes(self, shapes):
+        newShapes = []
+        newNodes = []
+        oldNodes = []
+        for shape in shapes:
+            shapeNodes = []
+            for node in shape.nodes():
+                if node not in oldNodes:
+                    dupeNode = EMFNode.createFromNode(node)
+                    newNodes.append(dupeNode)
+                    oldNodes.append(node)
+                    shapeNodes.append(dupeNode)
+                else:
+                    shapeNodes.append(newNodes[oldNodes.index(node)])
+            newShapes.append(EMFShape(shapeNodes, False))
+            self.addShapeLines(newShapes[-1])
+        self.nodes.extend(newNodes)
+        self.shapes.extend(newShapes)
+        self.selectedItems.clear()
+        self.selectedItems.extend(newShapes)
+
     # update to a new median point. should do when grabbing nodes, or
     # chaning the number of selected items
-
     def updateMedianPoint(self):
         if len(self.selectedItems) > 0:
             self.medianNode = EMFNodeHelper.medianNode(self.selectedItems)
@@ -413,13 +473,15 @@ class EMFNodeTest(QWidget):
         elif (event.key() == Qt.Key_A
               and self.interactMode == EMFNodeTest.INTERACT_SELECT):
             self.selectAll()
+        elif (event.key() == Qt.Key_D):
+            self.duplicateItems()
         elif (event.key() == Qt.Key_E
               and self.interactMode == EMFNodeTest.INTERACT_SELECT):
             self.extrudeItems()
         elif event.key() == Qt.Key_F:
             self.formItem()
         elif event.key() == Qt.Key_X:
-             # and event.modifiers == Qt.ShiftModifier:
+            # and event.modifiers == Qt.ShiftModifier:
             self.deleteItems(event.modifiers() == Qt.ShiftModifier)
 
         self.repaint()
