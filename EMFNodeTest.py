@@ -127,6 +127,7 @@ class EMFNodeTest(QWidget):
         self.selectedItems.clear()
         self.medianNode = None
 
+    # form a new line or shape from the existing selected items
     def formItem(self):
         if self.interactMode == EMFNodeTest.INTERACT_SELECT:
             # shape is too complex; save logic for later
@@ -141,6 +142,67 @@ class EMFNodeTest(QWidget):
                     self.addShapeLines(self.shapes[-1])
                     pass
 
+    def deleteItems(self, deleteTouchingNodes=False):
+        if self.interactMode == EMFNodeTest.INTERACT_SELECT:
+            if deleteTouchingNodes:
+                self.deleteNodes(EMFNodeHelper.listOfNodes(self.selectedItems))
+
+                pass
+            else:
+                delMethods = {EMFNodeTest.SELECT_TYPE_NODE: self.deleteNodes,
+                              EMFNodeTest.SELECT_TYPE_LINE: self.deleteLines,
+                              EMFNodeTest.SELECT_TYPE_SHAPE: self.deleteShapes}
+                delMethods[self.selectedType](self.selectedItems)
+            self.selectedItems.clear()
+            self.updateMedianPoint()
+            # delete selectedItems
+        pass
+
+    # Delete all selected nodes. also removes all touching lines and shapes
+    def deleteNodes(self, nodes):
+        shapesTBD = set()
+        linesTBD = set()
+        # grab shapes to remove
+        for node in nodes:
+            for line in node.getLines():
+                linesTBD.add(line)
+            for shape in node.getShapes():
+                shapesTBD.add(shape)
+        # remove shapes
+        for shape in shapesTBD:
+            shape.shapeDeleted()
+            self.shapes.remove(shape)
+        for line in linesTBD:
+            # delete lines
+            line.lineDeleted()
+            self.lines.remove(line)
+        for node in nodes:
+            self.nodes.remove(node)
+        pass
+
+    # Delete all selected lines. also removes all touching shapes
+    def deleteLines(self, lines):
+        # Generate set of shapes
+        shapesTBD = set()
+        # grab shapes to remove
+        for line in lines:
+            for shape in line.shapes():
+                shapesTBD.add(shape)
+        # remove shapes
+        for shape in shapesTBD:
+            shape.shapeDeleted()
+            self.shapes.remove(shape)
+        for line in lines:
+            # delete lines
+            line.lineDeleted()
+            self.lines.remove(line)
+
+    # delete all selected shapes. Does not affect nodes or lines.
+    def deleteShapes(self, shapes):
+        for shape in shapes:
+            shape.shapeDeleted()
+            self.shapes.remove(shape)
+
     def extrudeItems(self):
         if self.interactMode == EMFNodeTest.INTERACT_SELECT:
             if self.selectedType == EMFNodeTest.SELECT_TYPE_NODE:
@@ -152,6 +214,7 @@ class EMFNodeTest(QWidget):
                     and len(self.selectedItems) > 0):
                 self.extrudeLines()
 
+    # add a single node based off the current position of the cursor
     def addNode(self):
         self.nodes.append(
             EMFNode(self.currentMousePos.x(), self.currentMousePos.y()))
@@ -348,7 +411,9 @@ class EMFNodeTest(QWidget):
             self.extrudeItems()
         elif event.key() == Qt.Key_F:
             self.formItem()
-            # # TODO:
+        elif event.key() == Qt.Key_X:
+             # and event.modifiers == Qt.ShiftModifier:
+            self.deleteItems(event.modifiers() == Qt.ShiftModifier)
 
         self.repaint()
 

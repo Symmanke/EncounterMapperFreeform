@@ -95,6 +95,9 @@ class EMFNode:
     def getLines(self):
         return self.lines
 
+    def getShapes(self):
+        return self.shapes
+
     def connectedNodes(self):
         nodeSet = set()
         for line in self.lines:
@@ -112,8 +115,13 @@ class EMFNode:
     def getShapes(self):
         return self.shapes
 
-    def removeShape(self, shape):
-        pass
+    def removeLineRef(self, line):
+        if line in self.lines:
+            self.lines.remove(line)
+
+    def removeShapeRef(self, shape):
+        if shape in self.shapes:
+            self.shapes.remove(shape)
 
     def inSelectRange(self, point, threshold=100):
         return EMFNodeHelper.nodeDistanceSqr(point, self) <= threshold
@@ -125,14 +133,21 @@ class EMFLine:
 
         n1.addLine(self)
         n2.addLine(self)
-        self.shapes = [] if shape is None else [shape]
+        self.lineShapes = [] if shape is None else [shape]
 
     def addShape(self, shape):
-        if shape is not None:
-            self.shapes.append(shape)
+        if shape is not None and shape not in self.lineShapes:
+            self.lineShapes.append(shape)
+
+    def removeShapeRef(self, shape):
+        if shape in self.lineShapes:
+            self.lineShapes.remove(shape)
 
     def nodes(self):
         return self.lineNodes
+
+    def shapes(self):
+        return self.lineShapes
 
     def beginTransform(self):
         for node in self.lineNodes:
@@ -148,6 +163,10 @@ class EMFLine:
 
     def inSelectRange(self, point, threshold=100):
         return EMFNodeHelper.lineDistanceSqr(point, self) <= threshold
+
+    def lineDeleted(self):
+        for node in self.lineNodes:
+            node.removeLineRef(self)
 
 
 class EMFShape:
@@ -169,6 +188,7 @@ class EMFShape:
                 self.shapeLines.append(EMFLine(lastNode, node, self))
             else:
                 self.shapeLines.append(line.pop())
+                self.shapeLines[-1].addShape(self)
             lastNode = node
         nps = []
         for node in self.shapeNodes:
@@ -201,6 +221,14 @@ class EMFShape:
 
     def inSelectRange(self, point, threshold=100):
         return self.nodePoly.containsPoint(point.point(), Qt.OddEvenFill)
+
+    def shapeDeleted(self):
+        for line in self.shapeLines:
+            line.removeShapeRef(self)
+        for node in self.shapeNodes:
+            node.removeShapeRef(self)
+        self.nodePoly = False
+        pass
 
 
 class EMFNodeHelper:
