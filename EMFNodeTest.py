@@ -202,14 +202,12 @@ class EMFNodeTest(QWidget):
 
     def extrudeItems(self):
         if self.interactMode == EMFNodeTest.INTERACT_SELECT:
-            if self.selectedType == EMFNodeTest.SELECT_TYPE_NODE:
-                if len(self.selectedItems) > 0:
-                    self.extrudeNodes()
-                else:
-                    self.addNode()
-            if (self.selectedType == EMFNodeTest.SELECT_TYPE_LINE
-                    and len(self.selectedItems) > 0):
-                self.extrudeLines()
+            extMethods = {EMFNodeTest.SELECT_TYPE_NODE: self.extrudeNodes,
+                          EMFNodeTest.SELECT_TYPE_LINE: self.extrudeLines,
+                          EMFNodeTest.SELECT_TYPE_SHAPE: self.extrudeShapes}
+            extMethods[self.selectedType](self.selectedItems)
+            self.updateMedianPoint()
+            self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
 
     # add a single node based off the current position of the cursor
     def addNode(self):
@@ -217,52 +215,49 @@ class EMFNodeTest(QWidget):
             EMFNode(self.currentMousePos.x(), self.currentMousePos.y()))
         self.selectedItems.clear()
         self.selectedItems.append(self.nodes[-1])
-        self.updateMedianPoint()
-        self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
 
     # Form a line out of each Node
-    def extrudeNodes(self):
-        newNodes = []
-        for node in self.selectedItems:
-            newNodes.append(EMFNode.createFromNode(node))
-            self.nodes.append(newNodes[-1])
-            self.lines.append(EMFLine(node, newNodes[-1]))
-        self.selectedItems.clear()
-        self.selectedItems.extend(newNodes)
-        self.updateMedianPoint()
-        self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
+    def extrudeNodes(self, nodes):
+        if len(nodes) == 0:
+            self.addNode()
+        else:
+            newNodes = []
+            for node in nodes:
+                newNodes.append(EMFNode.createFromNode(node))
+                self.nodes.append(newNodes[-1])
+                self.lines.append(EMFLine(node, newNodes[-1]))
+            self.selectedItems.clear()
+            self.selectedItems.extend(newNodes)
 
     # form a shape out of each line
-    def extrudeLines(self):
-        newNodes = []
-        oldNodes = []
-        newLines = []
-        for line in self.selectedItems:
-            lineNodes = []
-            for node in line.nodes():
-                if node not in oldNodes:
-                    dupeNode = EMFNode.createFromNode(node)
-                    newNodes.append(dupeNode)
-                    oldNodes.append(node)
-                    self.lines.append(EMFLine(node, dupeNode))
-                    lineNodes.append(dupeNode)
-                else:
-                    # grab node somewhere else
-                    lineNodes.append(newNodes[oldNodes.index(node)])
-                    # EMFLine(lineNodes[0], lineNodes[1]))
-            newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
-            self.shapes.append(EMFShape.createFromLines((line, newLines[-1])))
+    def extrudeLines(self, lines):
+        if len(lines) > 0:
+            newNodes = []
+            oldNodes = []
+            newLines = []
+            for line in lines:
+                lineNodes = []
+                for node in line.nodes():
+                    if node not in oldNodes:
+                        dupeNode = EMFNode.createFromNode(node)
+                        newNodes.append(dupeNode)
+                        oldNodes.append(node)
+                        self.lines.append(EMFLine(node, dupeNode))
+                        lineNodes.append(dupeNode)
+                    else:
+                        lineNodes.append(newNodes[oldNodes.index(node)])
+                newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
+                self.shapes.append(
+                    EMFShape.createFromLines((line, newLines[-1])))
 
-        self.nodes.extend(newNodes)
-        self.lines.extend(newLines)
-        self.selectedItems.clear()
-        self.selectedItems.extend(newLines)
-        self.updateMedianPoint()
-        self.beginInteraction(EMFNodeTest.INTERACT_GRAB)
+            self.nodes.extend(newNodes)
+            self.lines.extend(newLines)
+            self.selectedItems.clear()
+            self.selectedItems.extend(newLines)
 
     # Duplicate the shape
-    def extrudeFaces(self):
-        pass
+    def extrudeShapes(self, shapes):
+        self.duplicateShapes(shapes)
 
     def duplicateItems(self):
         if self.interactMode == EMFNodeTest.INTERACT_SELECT:
