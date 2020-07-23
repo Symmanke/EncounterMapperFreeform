@@ -106,14 +106,8 @@ class EMFNode:
             nodeSet.remove(self)
         return nodeSet
 
-    def removeLine(self, line):
-        pass
-
     def addShape(self, shape):
         self.shapes.append(shape)
-
-    def getShapes(self):
-        return self.shapes
 
     def removeLineRef(self, line):
         if line in self.lines:

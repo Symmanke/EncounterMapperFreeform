@@ -285,33 +285,39 @@ class EMFNodeTest(QWidget):
 
     # drag the selected nodes based on the offset between the initial mouse
     # position and current one
-    def interactGrab(self):
+    def interactGrab(self, incremental=False):
         offset = (self.currentMousePos.x() - self.interactNode.x(),
                   self.currentMousePos.y() - self.interactNode.y())
+        if incremental:
+            offset = (offset[0] - offset[0] % 9, offset[1] - offset[1] % 9)
         for node in self.selectedNodes:
             node.grab(offset)
         self.updateMedianPoint()
 
     # Rotate the selected nodes around the median using a delta of the initial
     # mouse angle and current
-    def interactRotate(self):
+    def interactRotate(self, incremental=False):
         oldDelta = EMFNodeHelper.nodeAngles(
             self.formerMedian, self.interactNode)
         newDelta = EMFNodeHelper.nodeAngles(
             self.formerMedian, self.currentMousePos)
         delta = newDelta - oldDelta
+        if(incremental):
+            delta = delta - (delta % 15)
         for node in self.selectedNodes:
             node.rotate(delta - 90)
 
     # Scale the selected nodes based off a ratio of the initial mouse pos and
     # current pos
-    def interactScale(self):
+    def interactScale(self, incremental=False):
         # get a ratio of the two distances
         oldDist = math.sqrt(EMFNodeHelper.nodeDistanceSqr(
             self.formerMedian, self.interactNode))
         oldDist = 0.1 if oldDist == 0 else oldDist
         newDist = math.sqrt(EMFNodeHelper.nodeDistanceSqr(
             self.formerMedian, self.currentMousePos))
+        if(incremental):
+            newDist = newDist - newDist % 36
         ratio = newDist / oldDist
         for node in self.selectedNodes:
             node.scale(ratio)
@@ -322,7 +328,8 @@ class EMFNodeTest(QWidget):
                       EMFNodeTest.INTERACT_ROTATE: self.interactRotate,
                       EMFNodeTest.INTERACT_SCALE: self.interactScale}
         if self.interactMode in selections:
-            selections[self.interactMode]()
+            selections[self.interactMode](
+                QApplication.keyboardModifiers() == Qt.ShiftModifier)
 
     # Helper cleanup before beginning an interaction (Grab, Scale, Rotate)
     def beginInteraction(self, interactionType):
