@@ -20,13 +20,13 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import (QApplication, QLabel,
                              QPushButton, QScrollArea,
                              QListWidget, QGridLayout, QFrame, QSplitter,
-                             QVBoxLayout,)
+                             QVBoxLayout, QDialog)
 from EMFDisplayProperty import EMFDisplayItemWidget
 from EMFNodeDisplayItems import ColorCircleDisplay, ImageDisplay
+from DisplayItemPicker import DisplayItemPicker
 
 
 class DisplayItemSidebar(QFrame):
@@ -37,7 +37,6 @@ class DisplayItemSidebar(QFrame):
         attributescroll = QScrollArea()
         attributescroll.setAlignment(Qt.AlignCenter)
         attributescroll.setWidget(self.diAttributes)
-        # attributescroll.setBackgroundRole(QPalette.Dark)
         self.splitter = QSplitter(Qt.Vertical)
 
         self.splitter.addWidget(self.diList)
@@ -52,11 +51,14 @@ class DisplayItemList(QFrame):
     def __init__(self):
         super(DisplayItemList, self).__init__()
         self.displayItems = []
+        self.diEditor = None
+        self.diDialog = None
         self.listWidget = QListWidget()
 
         self.upBtn = QPushButton("up")
         self.downBtn = QPushButton("down")
         self.addBtn = QPushButton("add")
+        self.addBtn.clicked.connect(self.openDIEdit)
         self.delBtn = QPushButton("del")
 
         layout = QGridLayout()
@@ -69,6 +71,32 @@ class DisplayItemList(QFrame):
 
         self.setLayout(layout)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+
+    def openDIEdit(self):
+        self.diDialog = QDialog()
+        layout = QVBoxLayout()
+
+        self.diEditor = DisplayItemPicker()
+        self.diEditor.acceptedAction.connect(self.applyDIEdit)
+        self.diEditor.cancelledAction.connect(self.cancelDIEdit)
+
+        layout.addWidget(self.diEditor)
+        self.diDialog.setLayout(layout)
+        self.diDialog.exec_()
+
+    def applyDIEdit(self):
+        self.selectedColor = self.diEditor.getCurrentColor()
+        self.diDialog.close()
+        self.diDialog = None
+        self.diEditor = None
+
+        self.setPreview(self.selectedColor)
+        self.updateValue(self.selectedColor)
+
+    def cancelDIEdit(self):
+        self.diDialog.close()
+        self.diDialog = None
+        self.diEditor = None
 
 
 # Display the EMFDisplayItemWidget for each selected DisplayItem.

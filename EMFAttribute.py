@@ -21,7 +21,10 @@ If not, see <https://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (QWidget, QSlider, QLabel, QHBoxLayout,
-                             QSpinBox, QFileDialog, QPushButton)
+                             QSpinBox, QFileDialog, QPushButton, QDialog)
+from PyQt5.QtGui import QPalette, QColor
+
+from EMFColorPicker import ColorPicker
 
 
 class EMFAttribute:
@@ -121,3 +124,61 @@ class FilePickerAttributeWidget(EMFAttributeWidget):
                 pathName = pathName.split("/")[-1]
             self.fileLabel.setText(pathName)
             self.updateValue(pathToOpen[0])
+
+
+class ColorAttributeWidget(EMFAttributeWidget):
+    def __init__(self, attributes, params):
+        super(ColorAttributeWidget, self).__init__(attributes, params)
+        self.colorDialog = None
+        self.colorEditor = None
+
+        self.preview = QWidget()
+        self.preview.setMinimumWidth(100)
+        # self.preview.setMinimumHeight(100)
+        self.preview.setAutoFillBackground(True)
+        self.selectedColor = None
+        if len(self.attributes) == 1:
+            self.selectedColor = attributes[0].getValue()
+        else:
+            rgb = params["startValue"]
+            self.selectedColor = QColor(rgb[0], rgb[1], rgb[2])
+        self.setPreview(self.selectedColor)
+        self.cpBtn = QPushButton("Choose")
+        self.cpBtn.clicked.connect(self.openColorEdit)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.preview)
+        layout.addWidget(self.cpBtn)
+        self.setLayout(layout)
+
+    def setPreview(self, color):
+        palette = QPalette()
+        palette.setColor(QPalette.Background, color)
+        self.preview.setPalette(palette)
+        self.preview.repaint()
+
+    def openColorEdit(self):
+        self.colorDialog = QDialog()
+        layout = QHBoxLayout()
+
+        self.colorEditor = ColorPicker(self.selectedColor)
+        self.colorEditor.acceptedAction.connect(self.applyColorEdit)
+        self.colorEditor.cancelledAction.connect(self.cancelColorEdit)
+
+        layout.addWidget(self.colorEditor)
+        self.colorDialog.setLayout(layout)
+        self.colorDialog.exec_()
+
+    def applyColorEdit(self):
+        self.selectedColor = self.colorEditor.getCurrentColor()
+        self.colorDialog.close()
+        self.colorDialog = None
+        self.colorEditor = None
+
+        self.setPreview(self.selectedColor)
+        self.updateValue(self.selectedColor)
+
+    def cancelColorEdit(self):
+        self.colorDialog.close()
+        self.colorDialog = None
+        self.colorEditor = None
