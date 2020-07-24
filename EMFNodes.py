@@ -28,7 +28,6 @@ import math
 
 class EMFNode:
     def __init__(self, x, y):
-        # super(EMFNode, self).__init__(x, y)
         self.nPoint = QPoint(x, y)
         self.lines = []
         self.shapes = []

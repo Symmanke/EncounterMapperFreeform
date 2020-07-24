@@ -27,6 +27,13 @@ import math
 
 from EMFNodes import EMFNode, EMFShape, EMFLine, EMFNodeHelper
 
+"""
+This file was used when developing a ui to handle nodes, lines, and shapes. It
+is a prototype of EMFNodeEditor. EMFNodeTest is no longer used in
+EncounterMapperFreeform, and is kept in the project solely to document
+my process throughout developing this application.
+"""
+
 
 class EMFNodeTest(QWidget):
     SELECT_TYPE_NODE = "NODE"
