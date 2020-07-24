@@ -19,17 +19,20 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel
+from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QPalette
 
 
 # Display the full set of attributes and their values if possible for an
 # EMFDisplayItem
-class EMFDisplayItemWidget(QWidget):
+class EMFDisplayItemWidget(QFrame):
     displayItemUpdated = pyqtSignal()
 
     def __init__(self, displayItem):
         super(EMFDisplayItemWidget, self).__init__()
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+        self.setBackgroundRole(QPalette.Window)
         self.displayItem = displayItem
         layout = QGridLayout()
         layout.addWidget(QLabel(self.displayItem.getName()), 0, 0, 1, 2)
@@ -38,16 +41,18 @@ class EMFDisplayItemWidget(QWidget):
         shared = self.displayItem.getSharedAttributes()
         for key in shared:
             layout.addWidget(QLabel(key), curRow, 0)
-            widget = shared[key].widgetClass(None, shared[key].widgetParams)
+            attr = shared[key]
+            widget = attr.widgetClass()(None, attr.widgetParams)
             widget.attributeChanged.connect(self.updateAttribute)
             layout.addWidget(widget, curRow, 1)
             curRow += 1
         indiv = self.displayItem.getIndividualAttributes()
-        layout.addWidget(QLabel("--Individual--"), curRow, 0, 1, 2)
+        layout.addWidget(QLabel("--INDIVIDUAL--"), curRow, 0, 1, 2)
         curRow += 1
         for key in indiv:
             layout.addWidget(QLabel(key), curRow, 0)
-            widget = indiv[key].widgetClass(None, shared[key].widgetParams)
+            attr = indiv[key]
+            widget = attr.widgetClass()(None, attr.widgetParams)
             widget.attributeChanged.connect(self.updateAttribute)
             layout.addWidget(widget, curRow, 1)
             curRow += 1
@@ -64,13 +69,12 @@ class EMFDisplayItemWidget(QWidget):
 # Each DisplayItem has attributes. Some attributes will be shared by all,
 # While
 class EMFDisplayItem:
-    def __init__(self, name, allowedClass,
-                 sharedAttributes, individualAttributes):
+    def __init__(self, name, allowedClass):
         self.name = name
         self.allowedClassItems = allowedClass
         self.propertyItems = []
-        self.sharedAttributes = sharedAttributes
-        self.individualAttributes = individualAttributes
+        self.sharedAttributes = {}
+        self.individualAttributes = {}
 
     def addItem(self, item):
         self.propertyItems.append(item)

@@ -19,14 +19,72 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import (QApplication, QWidget, QSlider, QLabel, QHBoxLayout,
-                             QSpinBox)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPalette
+from PyQt5.QtWidgets import (QApplication, QLabel,
+                             QPushButton, QScrollArea,
+                             QListWidget, QGridLayout, QFrame, QSplitter,
+                             QVBoxLayout,)
+from EMFDisplayProperty import EMFDisplayItemWidget
+from EMFNodeDisplayItems import ColorCircleDisplay, ImageDisplay
 
 
-class DisplayItemSidebar(QWidget):
+class DisplayItemSidebar(QFrame):
     def __init__(self):
         super(DisplayItemSidebar, self).__init__()
+        self.diList = DisplayItemList()
+        self.diAttributes = DisplayAttributeList()
+        attributescroll = QScrollArea()
+        attributescroll.setAlignment(Qt.AlignCenter)
+        attributescroll.setWidget(self.diAttributes)
+        # attributescroll.setBackgroundRole(QPalette.Dark)
+        self.splitter = QSplitter(Qt.Vertical)
+
+        self.splitter.addWidget(self.diList)
+        self.splitter.addWidget(attributescroll)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.splitter)
+        self.setLayout(layout)
+
+
+class DisplayItemList(QFrame):
+    def __init__(self):
+        super(DisplayItemList, self).__init__()
+        self.displayItems = []
+        self.listWidget = QListWidget()
+
+        self.upBtn = QPushButton("up")
+        self.downBtn = QPushButton("down")
+        self.addBtn = QPushButton("add")
+        self.delBtn = QPushButton("del")
+
+        layout = QGridLayout()
+        layout.addWidget(QLabel("Display Items:"), 0, 0, 1, 2)
+        layout.addWidget(self.listWidget, 1, 0, 1, 2)
+        layout.addWidget(self.upBtn, 2, 0)
+        layout.addWidget(self.downBtn, 2, 1)
+        layout.addWidget(self.addBtn, 3, 0)
+        layout.addWidget(self.delBtn, 3, 1)
+
+        self.setLayout(layout)
+        self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+
+
+# Display the EMFDisplayItemWidget for each selected DisplayItem.
+class DisplayAttributeList(QFrame):
+    def __init__(self):
+        super(DisplayAttributeList, self).__init__()
+        self.diws = [EMFDisplayItemWidget(ColorCircleDisplay("Test 1")),
+                     EMFDisplayItemWidget(ImageDisplay("Hello"))]
+        self.updateDisplayedDIWS()
+
+    def updateDisplayedDIWS(self):
+        layout = QVBoxLayout()
+
+        for diw in self.diws:
+            layout.addWidget(diw)
+        self.setLayout(layout)
 
 
 def main():

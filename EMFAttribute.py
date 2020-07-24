@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (QWidget, QSlider, QLabel, QHBoxLayout,
-                             QSpinBox)
+                             QSpinBox, QFileDialog, QPushButton)
 
 
 class EMFAttribute:
@@ -53,7 +53,7 @@ class EMFAttributeWidget(QWidget):
 
     def __init__(self, attributes, params):
         super(EMFAttributeWidget, self).__init__()
-        self.attributes = attributes
+        self.attributes = {} if attributes is None else attributes
 
     def updateValue(self, value):
         for attribute in self.attributes:
@@ -67,29 +67,57 @@ class ScrollbarAttributeWidget(EMFAttributeWidget):
         self.scroll = QSlider(Qt.Horizontal, self)
         self.scroll.setMinimum(params["minimum"])
         self.scroll.setMaximum(params["maximum"])
-        if len(attributes) == 1:
+        if len(self.attributes) == 1:
             self.scroll.setValue(attributes[0].getValue())
         else:
             self.scroll.setValue(params["startValue"])
-        self.scroll.sliderMoved.connect(self.updateValue)
-        self.valueLabel = QLabel(self.scroll.value())
+        self.scroll.sliderMoved.connect(self.updateSliderVal)
+        self.valueLabel = QLabel("{}".format(self.scroll.value()))
+        self.valueLabel.setFixedWidth(50)
         layout = QHBoxLayout()
-        layout.addWidget(self.scroll)
         layout.addWidget(self.valueLabel)
+        layout.addWidget(self.scroll)
         self.setLayout(layout)
+
+    def updateSliderVal(self, value):
+        self.valueLabel.setText("{}".format(value))
+        self.updateValue(value)
 
 
 class SpinboxAttributeWidget(EMFAttributeWidget):
     def __init__(self, attributes, params):
-        super(ScrollbarAttributeWidget, self).__init__(attributes, params)
-        self.spin = QSpinBox(Qt.Horizontal, self)
+        super(SpinboxAttributeWidget, self).__init__(attributes, params)
+        self.spin = QSpinBox()
         self.spin.setMinimum(params["minimum"])
         self.spin.setMaximum(params["maximum"])
-        if len(attributes) == 1:
+        if len(self.attributes) == 1:
             self.spin.setValue(attributes[0].getValue())
         else:
             self.spin.setValue(params["startValue"])
-        self.spin.valueChange.connect(self.updateValue)
+        self.spin.valueChanged.connect(self.updateValue)
         layout = QHBoxLayout()
         layout.addWidget(self.spin)
         self.setLayout(layout)
+
+
+class FilePickerAttributeWidget(EMFAttributeWidget):
+    def __init__(self, attributes, params):
+        super(FilePickerAttributeWidget, self).__init__(attributes, params)
+        self.fileLabel = QLabel("Choose a file...")
+        self.fileBtn = QPushButton("Select")
+        self.fileBtn.clicked.connect(self.pickFile)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.fileLabel)
+        layout.addWidget(self.fileBtn)
+        self.setLayout(layout)
+
+    def pickFile(self):
+        pathToOpen = QFileDialog.getOpenFileName(self, 'Open File',
+                                                 '', "Image (*.png)")
+        if pathToOpen is not None and pathToOpen[0]:
+            pathName = pathToOpen[0]
+            if "/" in pathName:
+                pathName = pathName.split("/")[-1]
+            self.fileLabel.setText(pathName)
+            self.updateValue(pathToOpen[0])
