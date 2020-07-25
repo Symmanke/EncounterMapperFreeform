@@ -56,26 +56,26 @@ class EMFAttribute:
 class EMFAttributeWidget(QWidget):
     attributeChanged = pyqtSignal()
 
-    def __init__(self, attributes, params):
+    def __init__(self, attr, params):
         super(EMFAttributeWidget, self).__init__()
-        self.attributes = {} if attributes is None else attributes
+        self.attribute = attr
+        # self.attributes = {} if attributes is None else attributes
 
     def updateValue(self, value):
-        for attribute in self.attributes:
-            attribute.setValue(value)
-        self.attributeChanged.emit()
+        self.attribute.setValue(value)
 
 
 class ScrollbarAttributeWidget(EMFAttributeWidget):
-    def __init__(self, attributes, params):
-        super(ScrollbarAttributeWidget, self).__init__(attributes, params)
+    def __init__(self, attr, params):
+        super(ScrollbarAttributeWidget, self).__init__(attr, params)
         self.scroll = QSlider(Qt.Horizontal, self)
         self.scroll.setMinimum(params["minimum"])
         self.scroll.setMaximum(params["maximum"])
-        if len(self.attributes) == 1:
-            self.scroll.setValue(attributes[0].getValue())
-        else:
-            self.scroll.setValue(params["startValue"])
+
+        val = attr.getValue()
+        val = params["startValue"] if val is None else val
+        self.scroll.setValue(val)
+
         self.scroll.sliderMoved.connect(self.updateSliderVal)
         self.valueLabel = QLabel("{}".format(self.scroll.value()))
         self.valueLabel.setFixedWidth(50)
@@ -90,15 +90,19 @@ class ScrollbarAttributeWidget(EMFAttributeWidget):
 
 
 class SpinboxAttributeWidget(EMFAttributeWidget):
-    def __init__(self, attributes, params):
-        super(SpinboxAttributeWidget, self).__init__(attributes, params)
+    def __init__(self, attr, params):
+        super(SpinboxAttributeWidget, self).__init__(attr, params)
         self.spin = QSpinBox()
         self.spin.setMinimum(params["minimum"])
         self.spin.setMaximum(params["maximum"])
-        if len(self.attributes) == 1:
-            self.spin.setValue(attributes[0].getValue())
-        else:
-            self.spin.setValue(params["startValue"])
+
+        val = attr.getValue()
+        val = params["startValue"] if val is None else val
+        self.spin.setValue(val)
+        # if len(self.attributes) == 1:
+        #     self.spin.setValue(attributes[0].getValue())
+        # else:
+        #     self.spin.setValue(params["startValue"])
         self.spin.valueChanged.connect(self.updateValue)
         layout = QHBoxLayout()
         layout.addWidget(self.spin)
@@ -106,9 +110,14 @@ class SpinboxAttributeWidget(EMFAttributeWidget):
 
 
 class FilePickerAttributeWidget(EMFAttributeWidget):
-    def __init__(self, attributes, params):
-        super(FilePickerAttributeWidget, self).__init__(attributes, params)
-        self.fileLabel = QLabel("Choose a file...")
+    def __init__(self, attr, params):
+        super(FilePickerAttributeWidget, self).__init__(attr, params)
+        val = attr.getValue()
+        pathName = "Choose a file..." if val is None else val
+        if "/" in pathName:
+            pathName = pathName.split("/")[-1]
+
+        self.fileLabel = QLabel(pathName)
         self.fileBtn = QPushButton("Select")
         self.fileBtn.clicked.connect(self.pickFile)
 
@@ -129,21 +138,22 @@ class FilePickerAttributeWidget(EMFAttributeWidget):
 
 
 class ColorAttributeWidget(EMFAttributeWidget):
-    def __init__(self, attributes, params):
-        super(ColorAttributeWidget, self).__init__(attributes, params)
+    def __init__(self, attr, params):
+        super(ColorAttributeWidget, self).__init__(attr, params)
         self.colorDialog = None
         self.colorEditor = None
 
         self.preview = QWidget()
         self.preview.setMinimumWidth(100)
-        # self.preview.setMinimumHeight(100)
         self.preview.setAutoFillBackground(True)
         self.selectedColor = None
-        if len(self.attributes) == 1:
-            self.selectedColor = attributes[0].getValue()
-        else:
+
+        val = attr.getValue()
+        if not isinstance(val, QColor):
             rgb = params["startValue"]
-            self.selectedColor = QColor(rgb[0], rgb[1], rgb[2])
+            val = QColor(rgb[0], rgb[1], rgb[2])
+        self.selectedColor = val
+
         self.setPreview(self.selectedColor)
         self.cpBtn = QPushButton("Choose")
         self.cpBtn.clicked.connect(self.openColorEdit)

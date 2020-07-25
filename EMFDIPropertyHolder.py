@@ -18,14 +18,11 @@ You should have received a copy of the GNU General Public License
 along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
-from EMFNodes import EMFNode, EMFLine, EMFShape, EMFNodeHelper
 
 
 class DIPropertyHolder:
     def __init__(self):
-        print("Enter DIP")
         self.diProperties = {}
-        print("Exit DIP")
 
     def addIndividualAttributes(self, di):
         if di not in self.diProperties:
@@ -47,25 +44,3 @@ class DIPropertyHolder:
         if di in self.diProperties:
             values = self.diProperties[di]
         return values
-
-
-class DIPNode(EMFNode, DIPropertyHolder):
-    def __init__(self, x, y):
-        EMFNode.__init__(self, x, y)
-        DIPropertyHolder.__init__(self)
-
-
-class DIPLine(EMFLine, DIPropertyHolder):
-    def __init__(self, n1, n2, shape=None):
-        EMFLine.__init__(self, n1, n2, shape)
-        DIPropertyHolder.__init__(self)
-
-
-class DIPShape(EMFShape, DIPropertyHolder):
-    def __init__(self, nodes, needSort=True):
-        EMFShape.__init__(self, nodes, needSort)
-        DIPropertyHolder.__init__(self)
-
-    @classmethod
-    def createFromLines(cls, lines):
-        return cls(EMFNodeHelper.listOfNodes(lines))

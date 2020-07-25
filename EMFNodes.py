@@ -25,10 +25,12 @@ from PyQt5.QtCore import Qt
 import operator
 import math
 
+from EMFDIPropertyHolder import DIPropertyHolder
 
-class EMFNode:
+
+class EMFNode(DIPropertyHolder):
     def __init__(self, x, y):
-        print("Enter Node")
+        super(EMFNode, self).__init__()
         self.nPoint = QPoint(x, y)
         self.lines = []
         self.shapes = []
@@ -38,8 +40,6 @@ class EMFNode:
 
         self.transforming = False
         self.offsetNode = None
-
-        print("Exit Node")
 
     @classmethod
     def createFromNode(cls, node):
@@ -123,8 +123,9 @@ class EMFNode:
         return EMFNodeHelper.nodeDistanceSqr(point, self) <= threshold
 
 
-class EMFLine:
+class EMFLine(DIPropertyHolder):
     def __init__(self, n1, n2, shape=None):
+        super(EMFLine, self).__init__()
         self.lineNodes = (n1, n2)
 
         n1.addLine(self)
@@ -165,8 +166,9 @@ class EMFLine:
             node.removeLineRef(self)
 
 
-class EMFShape:
+class EMFShape(DIPropertyHolder):
     def __init__(self, nodes, needSort=True):
+        super(EMFShape, self).__init__()
         if needSort:
             sorted = EMFNodeHelper.sortNodeGroup(nodes)
             nodes = []

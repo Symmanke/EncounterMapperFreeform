@@ -42,7 +42,7 @@ class EMFDisplayItemWidget(QFrame):
         for key in shared:
             layout.addWidget(QLabel(key), curRow, 0)
             attr = shared[key]
-            widget = attr.widgetClass()(None, attr.widgetParams)
+            widget = attr.widgetClass()(attr, attr.widgetParams)
             widget.attributeChanged.connect(self.updateAttribute)
             layout.addWidget(widget, curRow, 1)
             curRow += 1
@@ -52,7 +52,7 @@ class EMFDisplayItemWidget(QFrame):
         for key in indiv:
             layout.addWidget(QLabel(key), curRow, 0)
             attr = indiv[key]
-            widget = attr.widgetClass()(None, attr.widgetParams)
+            widget = attr.widgetClass()(attr, attr.widgetParams)
             widget.attributeChanged.connect(self.updateAttribute)
             layout.addWidget(widget, curRow, 1)
             curRow += 1

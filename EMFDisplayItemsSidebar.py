@@ -56,6 +56,7 @@ class DisplayItemList(QFrame):
         self.diEditor = None
         self.diDialog = None
         self.listWidget = QListWidget()
+        self.listWidget.itemClicked.connect(self.updateCurrentDI)
 
         self.upBtn = QPushButton("up")
         self.upBtn.clicked.connect(self.shiftItemUp)
@@ -109,6 +110,9 @@ class DisplayItemList(QFrame):
                 and self.listWidget.currentRow() >= 0):
             di = self.displayItems[self.listWidget.currentRow()]
         return di
+
+    def updateCurrentDI(self):
+        self.diSelectionChanged.emit()
 
     def openDIEdit(self):
         self.diDialog = QDialog()
