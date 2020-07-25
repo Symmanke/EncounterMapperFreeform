@@ -28,11 +28,11 @@ class ColorBGDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ColorBGDisplay, self).__init__(name, None)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Opacity": EMFAttribute(ScrollbarAttributeWidget,
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),
@@ -43,12 +43,12 @@ class ImageBGDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageBGDisplay, self).__init__(name, None)
         self.sharedAttributes = {
-            "Image": EMFAttribute(FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
 
         }
 
         self.individualAttributes = {
-            "Opacity": EMFAttribute(ScrollbarAttributeWidget,
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),

@@ -29,18 +29,18 @@ class ColorCircleDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ColorCircleDisplay, self).__init__(name, EMFNode)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
-            "LineColor": EMFAttribute(ColorAttributeWidget,
+            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Size": EMFAttribute(SpinboxAttributeWidget,
+            "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
                                  {"minimum": 0,
                                   "maximum": 1024,
                                   "startValue": 24}),
 
-            "Opacity": EMFAttribute(ScrollbarAttributeWidget,
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),
@@ -51,16 +51,18 @@ class ImageDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageDisplay, self).__init__(name, EMFNode)
         self.sharedAttributes = {
-            "Image": EMFAttribute(FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
 
         }
 
         self.individualAttributes = {
-            "SizeRatio": EMFAttribute(ScrollbarAttributeWidget,
+            "SizeRatio": EMFAttribute(self, "SizeRatio",
+                                      ScrollbarAttributeWidget,
                                       {"minimum": 0,
                                        "maximum": 1000,
                                        "startValue": 100}),
-            "Rotation": EMFAttribute(ScrollbarAttributeWidget,
+            "Rotation": EMFAttribute(self, "Rotation",
+                                     ScrollbarAttributeWidget,
                                      {"minimum": -180,
                                       "maximum": 180,
                                       "startValue": 0}),
@@ -71,20 +73,22 @@ class CircleShadowDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(CircleShadowDisplay, self).__init__(name, EMFNode)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Size": EMFAttribute(SpinboxAttributeWidget,
+            "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
                                  {"minimum": 0,
                                   "maximum": 1024,
                                   "startValue": 24}),
 
-            "StartOpacity": EMFAttribute(ScrollbarAttributeWidget,
+            "StartOpacity": EMFAttribute(self, "StartOpacity",
+                                         ScrollbarAttributeWidget,
                                          {"minimum": 0,
                                           "maximum": 100,
                                           "startValue": 50}),
-            "EndOpacity": EMFAttribute(ScrollbarAttributeWidget,
+            "EndOpacity": EMFAttribute(self, "EndOpacity",
+                                       ScrollbarAttributeWidget,
                                        {"minimum": 0,
                                         "maximum": 100,
                                         "startValue": 0}),

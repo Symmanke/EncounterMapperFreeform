@@ -29,18 +29,18 @@ class ColorLineDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ColorLineDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
-            "LineColor": EMFAttribute(ColorAttributeWidget,
+            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Width": EMFAttribute(ScrollbarAttributeWidget,
+            "Width": EMFAttribute(self, "Width", ScrollbarAttributeWidget,
                                   {"minimum": 0,
                                    "maximum": 36,
                                    "startValue": 24}),
 
-            "Opacity": EMFAttribute(ScrollbarAttributeWidget,
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),
@@ -51,7 +51,7 @@ class ImageLineDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageLineDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "Image": EMFAttribute(FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
 
         }
 
@@ -60,27 +60,32 @@ class ImageLineDisplay(EMFDisplayItem):
 
 class ColorDoorDisplay(EMFDisplayItem):
     def __init__(self, name):
-        super(ColorLineDisplay, self).__init__(name, EMFLine)
+        super(ColorDoorDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
-            "LineColor": EMFAttribute(ColorAttributeWidget,
+            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Length": EMFAttribute(ScrollbarAttributeWidget,
+            "Length": EMFAttribute(self, "Length", ScrollbarAttributeWidget,
                                    {"minimum": 0,
                                     "maximum": 36,
                                     "startValue": 24}),
-            "Width": EMFAttribute(ScrollbarAttributeWidget,
+            "Width": EMFAttribute(self, "Width", ScrollbarAttributeWidget,
                                   {"minimum": 0,
                                    "maximum": 36,
                                    "startValue": 24}),
 
-            "Opacity": EMFAttribute(ScrollbarAttributeWidget,
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),
+            "Position": EMFAttribute(self, "Position",
+                                     ScrollbarAttributeWidget,
+                                     {"minimum": 0,
+                                      "maximum": 100,
+                                      "startValue": 50}),
         }
 
 
@@ -88,15 +93,16 @@ class ImageDoorDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageDoorDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "Image": EMFAttribute(FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
 
         }
 
         self.individualAttributes = {
-            "Positioning": EMFAttribute(ScrollbarAttributeWidget,
-                                        {"minimum": 0,
-                                         "maximum": 100,
-                                         "startValue": 50}),
+            "Position": EMFAttribute(self, "Position",
+                                     ScrollbarAttributeWidget,
+                                     {"minimum": 0,
+                                      "maximum": 100,
+                                      "startValue": 50}),
         }
 
 
@@ -104,20 +110,22 @@ class LineShadowRadiusDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(LineShadowRadiusDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Size": EMFAttribute(SpinboxAttributeWidget,
+            "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
                                  {"minimum": 0,
                                   "maximum": 1024,
                                   "startValue": 24}),
 
-            "StartOpacity": EMFAttribute(ScrollbarAttributeWidget,
+            "StartOpacity": EMFAttribute(self, "StartOpacity",
+                                         ScrollbarAttributeWidget,
                                          {"minimum": 0,
                                           "maximum": 100,
                                           "startValue": 50}),
-            "EndOpacity": EMFAttribute(ScrollbarAttributeWidget,
+            "EndOpacity": EMFAttribute(self, "EndOpacity",
+                                       ScrollbarAttributeWidget,
                                        {"minimum": 0,
                                         "maximum": 100,
                                         "startValue": 0}),
@@ -126,22 +134,24 @@ class LineShadowRadiusDisplay(EMFDisplayItem):
 
 class LineShadowLengthDisplay(EMFDisplayItem):
     def __init__(self, name):
-        super(LineShadowRadiusDisplay, self).__init__(name, EMFLine)
+        super(LineShadowLengthDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Width": EMFAttribute(ScrollbarAttributeWidget,
+            "Width": EMFAttribute(self, "Width", ScrollbarAttributeWidget,
                                   {"minimum": 0,
                                    "maximum": 36,
                                    "startValue": 24}),
 
-            "StartOpacity": EMFAttribute(ScrollbarAttributeWidget,
+            "StartOpacity": EMFAttribute(self, "StartOpacity",
+                                         ScrollbarAttributeWidget,
                                          {"minimum": 0,
                                           "maximum": 100,
                                           "startValue": 50}),
-            "EndOpacity": EMFAttribute(ScrollbarAttributeWidget,
+            "EndOpacity": EMFAttribute(self, "EndOpacity",
+                                       ScrollbarAttributeWidget,
                                        {"minimum": 0,
                                         "maximum": 100,
                                         "startValue": 0}),

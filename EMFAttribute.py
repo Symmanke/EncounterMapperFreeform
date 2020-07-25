@@ -28,20 +28,22 @@ from EMFColorPicker import ColorPicker
 
 
 class EMFAttribute:
-    def __init__(self, widgetClass, widgetParams):
+    def __init__(self, parentDI, name, widgetClass, widgetParams):
         self.value = None
-        self.attributeWidget = None
+        self.parentDI = parentDI
+        self.name = name
+        # self.attributeWidget = None
         self.widgetclass = widgetClass
         self.widgetParams = widgetParams
+        if "startValue" in widgetParams:
+            self.value = widgetParams["startValue"]
 
     def getValue(self):
         return self.value
 
     def setValue(self, value):
         self.value = value
-
-    def setWidget(self, widget):
-        self.attributeWidget = widget
+        self.parentDI.valueUpdated(self.name)
 
     def widgetClass(self):
         return self.widgetclass

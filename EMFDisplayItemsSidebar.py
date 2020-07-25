@@ -19,35 +19,37 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QApplication, QLabel,
-                             QPushButton, QScrollArea,
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtWidgets import (QApplication, QLabel, QPushButton,
                              QListWidget, QGridLayout, QFrame, QSplitter,
                              QVBoxLayout, QDialog)
-from EMFDisplayProperty import EMFDisplayItemWidget
-from EMFNodeDisplayItems import ColorCircleDisplay, ImageDisplay
 from DisplayItemPicker import DisplayItemPicker
+from DisplayAttributeList import DisplayAttributeList
 
 
 class DisplayItemSidebar(QFrame):
     def __init__(self):
         super(DisplayItemSidebar, self).__init__()
         self.diList = DisplayItemList()
+        self.diList.diSelectionChanged.connect(self.updateDISelection)
         self.diAttributes = DisplayAttributeList()
-        attributescroll = QScrollArea()
-        attributescroll.setAlignment(Qt.AlignCenter)
-        attributescroll.setWidget(self.diAttributes)
         self.splitter = QSplitter(Qt.Vertical)
 
         self.splitter.addWidget(self.diList)
-        self.splitter.addWidget(attributescroll)
+        self.splitter.addWidget(self.diAttributes)
 
         layout = QVBoxLayout()
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
+    def updateDISelection(self):
+        self.selectedDI = self.diList.getSelectedDI()
+        self.diAttributes.setSelectedDI(self.selectedDI)
+
 
 class DisplayItemList(QFrame):
+    diSelectionChanged = pyqtSignal()
+
     def __init__(self):
         super(DisplayItemList, self).__init__()
         self.displayItems = []
@@ -101,6 +103,13 @@ class DisplayItemList(QFrame):
             self.displayItems[index+1] = shift
             self.updateDIList(index+1)
 
+    def getSelectedDI(self):
+        di = None
+        if (len(self.displayItems) > 0
+                and self.listWidget.currentRow() >= 0):
+            di = self.displayItems[self.listWidget.currentRow()]
+        return di
+
     def openDIEdit(self):
         self.diDialog = QDialog()
         layout = QVBoxLayout()
@@ -118,28 +127,13 @@ class DisplayItemList(QFrame):
         self.diDialog.close()
         self.diDialog = None
         self.diEditor = None
-        self.updateDIList()
+        self.updateDIList(len(self.displayItems)-1)
+        self.diSelectionChanged.emit()
 
     def cancelDIEdit(self):
         self.diDialog.close()
         self.diDialog = None
         self.diEditor = None
-
-
-# Display the EMFDisplayItemWidget for each selected DisplayItem.
-class DisplayAttributeList(QFrame):
-    def __init__(self):
-        super(DisplayAttributeList, self).__init__()
-        self.diws = [EMFDisplayItemWidget(ColorCircleDisplay("Test 1")),
-                     EMFDisplayItemWidget(ImageDisplay("Hello"))]
-        self.updateDisplayedDIWS()
-
-    def updateDisplayedDIWS(self):
-        layout = QVBoxLayout()
-
-        for diw in self.diws:
-            layout.addWidget(diw)
-        self.setLayout(layout)
 
 
 def main():

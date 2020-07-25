@@ -27,7 +27,7 @@ from PyQt5.QtGui import QPalette
 # Display the full set of attributes and their values if possible for an
 # EMFDisplayItem
 class EMFDisplayItemWidget(QFrame):
-    displayItemUpdated = pyqtSignal()
+    # displayItemUpdated = pyqtSignal()
 
     def __init__(self, displayItem):
         super(EMFDisplayItemWidget, self).__init__()
@@ -57,6 +57,7 @@ class EMFDisplayItemWidget(QFrame):
             layout.addWidget(widget, curRow, 1)
             curRow += 1
 
+        self.setAutoFillBackground(True)
         self.setLayout(layout)
 
     def updateAttribute(self):
@@ -69,6 +70,8 @@ class EMFDisplayItemWidget(QFrame):
 # Each DisplayItem has attributes. Some attributes will be shared by all,
 # While
 class EMFDisplayItem:
+    displayItemUpdated = pyqtSignal()
+
     def __init__(self, name, allowedClass):
         self.name = name
         self.allowedClassItems = allowedClass
@@ -88,6 +91,11 @@ class EMFDisplayItem:
 
     def getName(self):
         return self.name
+
+    def valueUpdated(self, attrName):
+        if attrName in self.individualAttributes:
+            for item in self.propertyItems:
+                item.updateAttribute(self, self.individualAttributes[attrName])
 
     def drawDisplay(self, painter, simple=True):
         drawMethod = self.drawSimple if simple else self.drawComplex

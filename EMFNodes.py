@@ -28,6 +28,7 @@ import math
 
 class EMFNode:
     def __init__(self, x, y):
+        print("Enter Node")
         self.nPoint = QPoint(x, y)
         self.lines = []
         self.shapes = []
@@ -37,6 +38,8 @@ class EMFNode:
 
         self.transforming = False
         self.offsetNode = None
+
+        print("Exit Node")
 
     @classmethod
     def createFromNode(cls, node):

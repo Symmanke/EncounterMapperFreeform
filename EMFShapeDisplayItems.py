@@ -29,13 +29,13 @@ class ColorShapeDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ColorShapeDisplay, self).__init__(name, EMFShape)
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(ColorAttributeWidget,
+            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
             "LineColor": EMFAttribute(ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
         }
         self.individualAttributes = {
-            "Opacity": EMFAttribute(ScrollbarAttributeWidget,
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),
@@ -46,12 +46,12 @@ class ImageShapeDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageShapeDisplay, self).__init__(name, EMFShape)
         self.sharedAttributes = {
-            "Image": EMFAttribute(FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
 
         }
 
         self.individualAttributes = {
-            "Opacity": EMFAttribute(ScrollbarAttributeWidget,
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),
