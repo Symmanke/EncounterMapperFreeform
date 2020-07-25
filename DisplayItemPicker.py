@@ -22,16 +22,42 @@ from PyQt5.QtWidgets import (QLineEdit, QComboBox,
                              QVBoxLayout, QHBoxLayout, QWidget)
 from EMFEditAction import EditAction
 
+from EMFNodeDisplayItems import (ColorCircleDisplay, ImageDisplay,
+                                 CircleShadowDisplay)
+from EMFLineDisplayItems import (ColorLineDisplay, ImageLineDisplay,
+                                 ColorDoorDisplay, ImageDoorDisplay,
+                                 LineShadowRadiusDisplay,
+                                 LineShadowLengthDisplay)
+from EMFShapeDisplayItems import ColorShapeDisplay, ImageShapeDisplay
+from EMFSpecialDisplay import ColorBGDisplay, ImageBGDisplay
+
 
 class DisplayItemPicker(EditAction):
     DIClasses = {
-
+        #  Nodes
+        "ColorCircleDisplay": ColorCircleDisplay,
+        "ImageDisplay": ImageDisplay,
+        "CircleShadowDisplay": CircleShadowDisplay,
+        #   Lines
+        "ColorLineDisplay": ColorLineDisplay,
+        "ImageLineDisplay": ImageLineDisplay,
+        "ColorDoorDisplay": ColorDoorDisplay,
+        "ImageDoorDisplay": ImageDoorDisplay,
+        "LineShadowRadiusDisplay": LineShadowRadiusDisplay,
+        "LineShadowLengthDisplay": LineShadowLengthDisplay,
+        #  Shapes
+        "ColorShapeDisplay": ColorShapeDisplay,
+        "ImageShapeDisplay": ImageShapeDisplay,
+        # Special
+        "ColorBGDisplay": ColorBGDisplay,
+        "ImageBGDisplay": ImageBGDisplay
     }
 
     def __init__(self):
         super(DisplayItemPicker, self).__init__()
         self.nameEdit = QLineEdit()
         self.diPicker = QComboBox()
+        self.diPicker.addItems(DisplayItemPicker.DIClasses.keys())
 
         diWidget = QWidget()
         diLayout = QHBoxLayout()
@@ -49,3 +75,7 @@ class DisplayItemPicker(EditAction):
         layout.addWidget(diWidget)
         layout.addWidget(btnWidget)
         self.setLayout(layout)
+
+    def getSelectedDI(self):
+        diSelection = DisplayItemPicker.DIClasses[self.diPicker.currentText()]
+        return diSelection(self.nameEdit.text())

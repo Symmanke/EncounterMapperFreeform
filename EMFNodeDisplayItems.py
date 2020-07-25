@@ -65,3 +65,27 @@ class ImageDisplay(EMFDisplayItem):
                                       "maximum": 180,
                                       "startValue": 0}),
         }
+
+
+class CircleShadowDisplay(EMFDisplayItem):
+    def __init__(self, name):
+        super(CircleShadowDisplay, self).__init__(name, EMFNode)
+        self.sharedAttributes = {
+            "FillColor": EMFAttribute(ColorAttributeWidget,
+                                      {"startValue": (0, 0, 0)}),
+        }
+        self.individualAttributes = {
+            "Size": EMFAttribute(SpinboxAttributeWidget,
+                                 {"minimum": 0,
+                                  "maximum": 1024,
+                                  "startValue": 24}),
+
+            "StartOpacity": EMFAttribute(ScrollbarAttributeWidget,
+                                         {"minimum": 0,
+                                          "maximum": 100,
+                                          "startValue": 50}),
+            "EndOpacity": EMFAttribute(ScrollbarAttributeWidget,
+                                       {"minimum": 0,
+                                        "maximum": 100,
+                                        "startValue": 0}),
+        }

@@ -499,6 +499,7 @@ class EMFNodeEditor(QWidget):
 
     def paintEvent(self, paintEvent):
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
         self.drawDebug(painter)
 
     def drawDebug(self, painter):

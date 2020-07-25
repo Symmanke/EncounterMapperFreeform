@@ -56,10 +56,14 @@ class DisplayItemList(QFrame):
         self.listWidget = QListWidget()
 
         self.upBtn = QPushButton("up")
+        self.upBtn.clicked.connect(self.shiftItemUp)
         self.downBtn = QPushButton("down")
+        self.downBtn.clicked.connect(self.shiftItemDown)
         self.addBtn = QPushButton("add")
         self.addBtn.clicked.connect(self.openDIEdit)
         self.delBtn = QPushButton("del")
+        self.selAllBtn = QPushButton("Select All")
+        self.addSelBtn = QPushButton("Add to Selection")
 
         layout = QGridLayout()
         layout.addWidget(QLabel("Display Items:"), 0, 0, 1, 2)
@@ -68,9 +72,34 @@ class DisplayItemList(QFrame):
         layout.addWidget(self.downBtn, 2, 1)
         layout.addWidget(self.addBtn, 3, 0)
         layout.addWidget(self.delBtn, 3, 1)
+        layout.addWidget(self.selAllBtn, 4, 0)
+        layout.addWidget(self.addSelBtn, 4, 1)
 
         self.setLayout(layout)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+
+    def updateDIList(self, index=-1):
+        self.listWidget.clear()
+        for di in self.displayItems:
+            self.listWidget.addItem(di.getName())
+        self.listWidget.setCurrentRow(index)
+        self.listWidget.repaint()
+
+    def shiftItemUp(self):
+        index = self.listWidget.currentRow()
+        if index > 0:
+            shift = self.displayItems[index]
+            self.displayItems[index] = self.displayItems[index-1]
+            self.displayItems[index-1] = shift
+            self.updateDIList(index-1)
+
+    def shiftItemDown(self):
+        index = self.listWidget.currentRow()
+        if index > -1 and index != len(self.displayItems)-1:
+            shift = self.displayItems[index]
+            self.displayItems[index] = self.displayItems[index+1]
+            self.displayItems[index+1] = shift
+            self.updateDIList(index+1)
 
     def openDIEdit(self):
         self.diDialog = QDialog()
@@ -85,13 +114,11 @@ class DisplayItemList(QFrame):
         self.diDialog.exec_()
 
     def applyDIEdit(self):
-        self.selectedColor = self.diEditor.getCurrentColor()
+        self.displayItems.append(self.diEditor.getSelectedDI())
         self.diDialog.close()
         self.diDialog = None
         self.diEditor = None
-
-        self.setPreview(self.selectedColor)
-        self.updateValue(self.selectedColor)
+        self.updateDIList()
 
     def cancelDIEdit(self):
         self.diDialog.close()
