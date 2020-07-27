@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import QPoint
-from PyQt5.QtGui import QPolygon
+from PyQt5.QtGui import QPolygon, QImage, QPainter
 from PyQt5.QtCore import Qt
 import operator
 import math
@@ -33,13 +33,16 @@ class NodeLayer(DIPropertyHolder):
     TYPE_LINE = "LINE"
     TYPE_SHAPE = "SHAPE"
 
-    def __init__(self):
+    def __init__(self, width, height):
+        super(NodeLayer, self).__init__()
         self.layerItems = {
             NodeLayer.TYPE_NODE: [],
             NodeLayer.TYPE_LINE: [],
             NodeLayer.TYPE_SHAPE: []
         }
 
+        self.layerWidth = width
+        self.layerHeight = height
         self.layerImage = None
 
     def addItemToLayer(self, type, item):
@@ -58,10 +61,23 @@ class NodeLayer(DIPropertyHolder):
     def getList(self, type):
         return self.layerItems[type]
 
+    def getDimensions(self):
+        return (self.layerWidth, self.layerHeight)
+
     def setLayerImage(self, image):
         self.layerImage = image
 
     def getLayerImage(self):
+        return self.layerImage
+
+    def redrawLayerImage(self, dis):
+        self.layerImage = QImage(self.layerWidth, self.layerHeight)
+        imgPainter = QPainter(self.layerImage)
+        imgPainter.begin()
+        # Draw onto image
+        for di in dis:
+            di.drawDisplay(imgPainter, self)
+        imgPainter.end()
         return self.layerImage
 
 
@@ -353,7 +369,6 @@ class EMFNodeHelper:
 
     @classmethod
     def sortByLine(cls, nodes):
-        print("BEGIN LINE SORT")
         sorted = []
         nodes.reverse()
         # Check if there are any existing lines in this

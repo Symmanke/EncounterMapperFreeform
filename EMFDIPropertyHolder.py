@@ -24,13 +24,18 @@ class DIPropertyHolder:
     def __init__(self):
         self.diProperties = {}
 
+    def currentDIs(self):
+        return list(self.diProperties.keys())
+
     def addIndividualAttributes(self, di):
+        # wat
         if di not in self.diProperties:
             attrValues = {}
             diAttr = di.getIndividualAttributes()
             for attrStr in diAttr:
                 attrValues[attrStr] = diAttr[attrStr].getValue()
             self.diProperties[di] = attrValues
+            print("ADDING PROPERTY: {}".format(self.diProperties))
 
     def updateAttribute(self, di, attr):
         if di in self.diProperties:

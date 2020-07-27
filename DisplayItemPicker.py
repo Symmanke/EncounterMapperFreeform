@@ -29,7 +29,7 @@ from EMFLineDisplayItems import (ColorLineDisplay, ImageLineDisplay,
                                  LineShadowRadiusDisplay,
                                  LineShadowLengthDisplay)
 from EMFShapeDisplayItems import ColorShapeDisplay, ImageShapeDisplay
-from EMFSpecialDisplay import ColorBGDisplay, ImageBGDisplay
+from EMFSpecialDisplay import ColorBGDisplay, ImageBGDisplay, GridDisplay
 
 
 class DisplayItemPicker(EditAction):
@@ -50,7 +50,8 @@ class DisplayItemPicker(EditAction):
         "ImageShapeDisplay": ImageShapeDisplay,
         # Special
         "ColorBGDisplay": ColorBGDisplay,
-        "ImageBGDisplay": ImageBGDisplay
+        "ImageBGDisplay": ImageBGDisplay,
+        "GridDisplay": GridDisplay
     }
 
     def __init__(self):

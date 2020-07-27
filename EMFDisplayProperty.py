@@ -79,9 +79,18 @@ class EMFDisplayItem:
         self.sharedAttributes = {}
         self.individualAttributes = {}
 
+    def addItems(self, items):
+        for item in items:
+            self.addItem(item)
+
     def addItem(self, item):
-        self.propertyItems.append(item)
-        item.addIndividualAttributes(self.individualAttributes)
+        if item not in self.propertyItems:
+            self.propertyItems.append(item)
+            item.addIndividualAttributes(self)
+            print("Property Added!")
+
+    def getAllowedClass(self):
+        return self.allowedClassItems
 
     def getSharedAttributes(self):
         return self.sharedAttributes
@@ -97,7 +106,7 @@ class EMFDisplayItem:
             for item in self.propertyItems:
                 item.updateAttribute(self, self.individualAttributes[attrName])
 
-    def drawDisplay(self, painter, simple=True):
+    def drawDisplay(self, painter, layer, simple=True):
         drawMethod = self.drawSimple if simple else self.drawComplex
         for item in self.propertyItems:
             drawMethod(painter, item)

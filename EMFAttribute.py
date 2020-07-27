@@ -38,6 +38,9 @@ class EMFAttribute:
         if "startValue" in widgetParams:
             self.value = widgetParams["startValue"]
 
+    def getName(self):
+        return self.name
+
     def getValue(self):
         return self.value
 

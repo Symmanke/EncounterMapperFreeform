@@ -22,11 +22,19 @@ from EMFDisplayProperty import EMFDisplayItem
 from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
                           ColorAttributeWidget,
                           FilePickerAttributeWidget)
+from EMFNodes import NodeLayer
+
+
+class GridDisplay(EMFDisplayItem):
+    def __init__(self, name):
+        super(GridDisplay, self).__init__(name, NodeLayer)
+        self.sharedAttributes = {}
+        self.individualAttributes = {}
 
 
 class ColorBGDisplay(EMFDisplayItem):
     def __init__(self, name):
-        super(ColorBGDisplay, self).__init__(name, None)
+        super(ColorBGDisplay, self).__init__(name, NodeLayer)
         self.sharedAttributes = {
             "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
                                       {"startValue": (0, 0, 0)}),
@@ -41,7 +49,7 @@ class ColorBGDisplay(EMFDisplayItem):
 
 class ImageBGDisplay(EMFDisplayItem):
     def __init__(self, name):
-        super(ImageBGDisplay, self).__init__(name, None)
+        super(ImageBGDisplay, self).__init__(name, NodeLayer)
         self.sharedAttributes = {
             "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
 

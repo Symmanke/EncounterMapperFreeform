@@ -29,7 +29,7 @@ from EMFNodes import NodeLayer, EMFNode, EMFShape, EMFLine, EMFNodeHelper
 # from EMFNodeLayer import
 
 
-class EMFNodeEditor(QWidget):
+class NodeEditor(QWidget):
     INTERACT_SELECT = "SELECT"
     INTERACT_GRAB = "GRAB"
     INTERACT_ROTATE = "ROTATE"
@@ -40,16 +40,16 @@ class EMFNodeEditor(QWidget):
     modeTypeSwitched = pyqtSignal()
 
     def __init__(self, width=600, height=400):
-        super(EMFNodeEditor, self).__init__()
+        super(NodeEditor, self).__init__()
         self.layerWidth = width
         self.layerHeight = height
-        self.currentNodeLayer = NodeLayer()
+        self.currentNodeLayer = NodeLayer(width, height)
         self.selectedType = NodeLayer.TYPE_NODE
         self.selectedItems = []
         self.selectedNodes = None
         self.medianNode = None
         self.formerMedian = None
-        self.interactMode = EMFNodeEditor.INTERACT_SELECT
+        self.interactMode = NodeEditor.INTERACT_SELECT
         self.interactNode = None
         self.currentMousePos = EMFNode(0, 0)
 
@@ -76,6 +76,19 @@ class EMFNodeEditor(QWidget):
         self.setFixedWidth(newWidth)
         self.setFixedHeight(newHeight)
 
+    # DI STUFF
+    def addDIToSelection(self, di):
+        if di.getAllowedClass() == NodeLayer:
+            di.addItem(self.currentNodeLayer)
+        else:
+            di.addItems(self.selectedItems)
+
+    def getCurrentDIs(self):
+        dis = set(self.currentNodeLayer.currentDIs())
+        for item in self.selectedItems:
+            dis = dis.union(item.currentDIs())
+        return dis
+
     # //////////// #
     # INTERACTIONS #
     # //////////// #
@@ -93,9 +106,11 @@ class EMFNodeEditor(QWidget):
             self.selectedItems.clear()
         if selectedItem is not None:
             self.selectedItems.append(selectedItem)
+            self.selectedItemsUpdated.emit()
         self.updateMedianPoint()
 
     # deselect either a singlular or all selected items
+
     def deselectItem(self, singleDeselect=False):
         if singleDeselect:
             itemTypeList = self.currentNodeLayer.getList(self.selectedType)
@@ -103,9 +118,11 @@ class EMFNodeEditor(QWidget):
                 if (item.inSelectRange(self.currentMousePos)
                         and item in self.selectedItems):
                     self.selectedItems.remove(item)
+                    self.selectedItemsUpdated.emit()
                     break
         else:
             self.selectedItems.clear()
+            self.selectedItemsUpdated.emit()
         self.updateMedianPoint()
 
     # toggle between selecting all and no nodes
@@ -113,9 +130,11 @@ class EMFNodeEditor(QWidget):
         itemTypeList = self.currentNodeLayer.getList(self.selectedType)
         if len(itemTypeList) == len(self.selectedItems):
             self.selectedItems.clear()
+            self.selectedItemsUpdated.emit()
         else:
             self.selectedItems.clear()
             self.selectedItems.extend(itemTypeList)
+            self.selectedItemsUpdated.emit()
         self.updateMedianPoint()
 
     # remove all items from selectedItems
@@ -125,7 +144,7 @@ class EMFNodeEditor(QWidget):
 
     # form a new line or shape from the existing selected items
     def formItem(self):
-        if self.interactMode == EMFNodeEditor.INTERACT_SELECT:
+        if self.interactMode == NodeEditor.INTERACT_SELECT:
             # shape is too complex; save logic for later
             if self.selectedType != NodeLayer.TYPE_SHAPE:
                 nodes = EMFNodeHelper.listOfNodes(self.selectedItems)
@@ -142,7 +161,7 @@ class EMFNodeEditor(QWidget):
                     pass
 
     def deleteItems(self, deleteTouchingNodes=False):
-        if self.interactMode == EMFNodeEditor.INTERACT_SELECT:
+        if self.interactMode == NodeEditor.INTERACT_SELECT:
             if deleteTouchingNodes:
                 self.deleteNodes(EMFNodeHelper.listOfNodes(self.selectedItems))
             else:
@@ -154,6 +173,7 @@ class EMFNodeEditor(QWidget):
                               self.deleteShapes}
                 delMethods[self.selectedType](self.selectedItems)
             self.selectedItems.clear()
+            self.selectedItemsUpdated.emit()
             self.updateMedianPoint()
 
     # Delete all selected nodes. also removes all touching lines and shapes
@@ -204,13 +224,14 @@ class EMFNodeEditor(QWidget):
             self.currentNodeLayer.removeFromLayer(NodeLayer.TYPE_SHAPE, shape)
 
     def extrudeItems(self):
-        if self.interactMode == EMFNodeEditor.INTERACT_SELECT:
+        if self.interactMode == NodeEditor.INTERACT_SELECT:
             extMethods = {NodeLayer.TYPE_NODE: self.extrudeNodes,
                           NodeLayer.TYPE_LINE: self.extrudeLines,
                           NodeLayer.TYPE_SHAPE: self.extrudeShapes}
             extMethods[self.selectedType](self.selectedItems)
+            self.selectedItemsUpdated.emit()
             self.updateMedianPoint()
-            self.beginInteraction(EMFNodeEditor.INTERACT_GRAB)
+            self.beginInteraction(NodeEditor.INTERACT_GRAB)
 
     # add a single node based off the current position of the cursor
     def addNode(self):
@@ -270,7 +291,7 @@ class EMFNodeEditor(QWidget):
         self.duplicateShapes(shapes)
 
     def duplicateItems(self):
-        if self.interactMode == EMFNodeEditor.INTERACT_SELECT:
+        if self.interactMode == NodeEditor.INTERACT_SELECT:
             dupeMethods = {NodeLayer.TYPE_NODE:
                            self.duplicateNodes,
                            NodeLayer.TYPE_LINE:
@@ -278,8 +299,9 @@ class EMFNodeEditor(QWidget):
                            NodeLayer.TYPE_SHAPE:
                            self.duplicateShapes}
             dupeMethods[self.selectedType](self.selectedItems)
+            self.selectedItemsUpdated.emit()
             self.updateMedianPoint()
-            self.beginInteraction(EMFNodeEditor.INTERACT_GRAB)
+            self.beginInteraction(NodeEditor.INTERACT_GRAB)
 
     # duplicate a selected series of nodes. doesn't duplicate the connected
     # lines or shapes
@@ -352,7 +374,7 @@ class EMFNodeEditor(QWidget):
     # switch between the types of selection (Node, Line, Shape)
     def changeSelectionType(self, selectionType):
         if (self.selectedType != selectionType
-                and self.interactMode == EMFNodeEditor.INTERACT_SELECT):
+                and self.interactMode == NodeEditor.INTERACT_SELECT):
             self.selectedType = selectionType
             self.clearSelectedItems()
 
@@ -397,9 +419,9 @@ class EMFNodeEditor(QWidget):
 
     # helper method to navigate to the correct interaction
     def updateInteraction(self):
-        selections = {EMFNodeEditor.INTERACT_GRAB: self.interactGrab,
-                      EMFNodeEditor.INTERACT_ROTATE: self.interactRotate,
-                      EMFNodeEditor.INTERACT_SCALE: self.interactScale}
+        selections = {NodeEditor.INTERACT_GRAB: self.interactGrab,
+                      NodeEditor.INTERACT_ROTATE: self.interactRotate,
+                      NodeEditor.INTERACT_SCALE: self.interactScale}
         if self.interactMode in selections:
             selections[self.interactMode](
                 QApplication.keyboardModifiers() == Qt.ShiftModifier)
@@ -408,7 +430,7 @@ class EMFNodeEditor(QWidget):
     def beginInteraction(self, interactionType):
         if (self.interactMode != interactionType
                 and len(self.selectedItems) > 0):
-            if self.interactMode != EMFNodeEditor.INTERACT_SELECT:
+            if self.interactMode != NodeEditor.INTERACT_SELECT:
                 # cancel previous interaction
                 self.cancelInteraction()
             self.interactMode = interactionType
@@ -421,7 +443,7 @@ class EMFNodeEditor(QWidget):
 
     # Reset node info to state before interaction began
     def cancelInteraction(self):
-        self.interactMode = EMFNodeEditor.INTERACT_SELECT
+        self.interactMode = NodeEditor.INTERACT_SELECT
         for node in self.selectedNodes:
             node.cancelTransform()
         self.selectedNodes = None
@@ -431,7 +453,7 @@ class EMFNodeEditor(QWidget):
 
     # Apply interaction changes
     def applyInteraction(self):
-        self.interactMode = EMFNodeEditor.INTERACT_SELECT
+        self.interactMode = NodeEditor.INTERACT_SELECT
         for node in self.selectedNodes:
             node.applyTransform()
         self.selectedNodes = None
@@ -444,7 +466,8 @@ class EMFNodeEditor(QWidget):
     # ////// #
 
     def mousePressEvent(self, event):
-        if self.interactMode == EMFNodeEditor.INTERACT_SELECT:
+        self.setFocus()
+        if self.interactMode == NodeEditor.INTERACT_SELECT:
             modifiers = QApplication.keyboardModifiers()
             if event.buttons() == Qt.LeftButton:
                 self.selectItem(modifiers == Qt.ShiftModifier)
@@ -463,7 +486,7 @@ class EMFNodeEditor(QWidget):
     def mouseMoveEvent(self, event):
         pos = event.pos()
         self.currentMousePos = EMFNode(pos.x(), pos.y())
-        if self.interactMode == EMFNodeEditor.INTERACT_SELECT:
+        if self.interactMode == NodeEditor.INTERACT_SELECT:
             pass
         else:
             self.updateInteraction()
@@ -478,18 +501,18 @@ class EMFNodeEditor(QWidget):
         elif event.key() == Qt.Key_3:
             self.changeSelectionType(NodeLayer.TYPE_SHAPE)
         elif event.key() == Qt.Key_G:
-            self.beginInteraction(EMFNodeEditor.INTERACT_GRAB)
+            self.beginInteraction(NodeEditor.INTERACT_GRAB)
         elif event.key() == Qt.Key_S:
-            self.beginInteraction(EMFNodeEditor.INTERACT_SCALE)
+            self.beginInteraction(NodeEditor.INTERACT_SCALE)
         elif event.key() == Qt.Key_R:
-            self.beginInteraction(EMFNodeEditor.INTERACT_ROTATE)
+            self.beginInteraction(NodeEditor.INTERACT_ROTATE)
         elif (event.key() == Qt.Key_A
-              and self.interactMode == EMFNodeEditor.INTERACT_SELECT):
+              and self.interactMode == NodeEditor.INTERACT_SELECT):
             self.selectAll()
         elif (event.key() == Qt.Key_D):
             self.duplicateItems()
         elif (event.key() == Qt.Key_E
-              and self.interactMode == EMFNodeEditor.INTERACT_SELECT):
+              and self.interactMode == NodeEditor.INTERACT_SELECT):
             self.extrudeItems()
         elif event.key() == Qt.Key_F:
             self.formItem()
@@ -505,6 +528,9 @@ class EMFNodeEditor(QWidget):
         self.drawDebug(painter)
 
     def drawDebug(self, painter):
+        painter.setBrush(Qt.white)
+        painter.setPen(Qt.white)
+        painter.drawRect(0, 0, self.layerWidth, self.layerHeight)
         painter.setPen(Qt.black)
         painter.drawText(10, 10, self.selectedType)
         painter.drawText(10, 20, self.interactMode)
@@ -515,7 +541,7 @@ class EMFNodeEditor(QWidget):
         self.drawMedianNode(painter)
         self.drawInteractionNode(painter)
         painter.drawText(50, 10, "{}".format(self.currentMousePos))
-        if self.interactMode == EMFNodeEditor.INTERACT_ROTATE:
+        if self.interactMode == NodeEditor.INTERACT_ROTATE:
             newDelta = EMFNodeHelper.nodeAngles(
                 self.formerMedian, self.currentMousePos)
             painter.drawText(10, 30, "{}".format(newDelta))
@@ -570,18 +596,18 @@ class EMFNodeEditor(QWidget):
 
     def drawInteractionNode(self, painter):
         painter.setPen(Qt.darkRed)
-        if self.interactMode == EMFNodeEditor.INTERACT_GRAB:
+        if self.interactMode == NodeEditor.INTERACT_GRAB:
             painter.drawLine(self.formerMedian.point(),
                              self.medianNode.point())
-        elif (self.interactMode == EMFNodeEditor.INTERACT_SCALE
-              or self.interactMode == EMFNodeEditor.INTERACT_ROTATE):
+        elif (self.interactMode == NodeEditor.INTERACT_SCALE
+              or self.interactMode == NodeEditor.INTERACT_ROTATE):
             painter.drawLine(self.formerMedian.point(),
                              self.currentMousePos.point())
 
 
 def main():
     app = QApplication([])
-    mainWidget = EMFNodeEditor()
+    mainWidget = NodeEditor()
     mainWidget.show()
     app.exec_()
 

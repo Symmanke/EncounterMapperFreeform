@@ -4,10 +4,14 @@ from EMFDisplayProperty import EMFDisplayItemWidget
 
 
 class DisplayAttributeList(QListWidget):
-    def __init__(self):
+    def __init__(self, editor):
         super(DisplayAttributeList, self).__init__()
+        self.nodeEditor = editor
+        self.nodeEditor.selectedItemsUpdated.connect(
+            self.updateDisplayedDIWS)
+        self.nodeEditor.selectTypeSwitched.connect(
+            self.updateDisplayedDIWS)
         self.selectedListDI = None
-        self.dis = []
 
         self.updateDisplayedDIWS()
 
@@ -25,9 +29,11 @@ class DisplayAttributeList(QListWidget):
         if self.selectedListDI is not None:
             addWidgetToList(QLabel("Selected Display Item:"))
             addWidgetToList(EMFDisplayItemWidget(self.selectedListDI))
-        if len(self.dis) > 0:
+
+        dis = list(self.nodeEditor.getCurrentDIs())
+        if len(dis) > 0:
             addWidgetToList(QLabel("Active Display Items:"))
-            for di in self.dis:
+            for di in dis:
                 addWidgetToList(EMFDisplayItemWidget(di))
 
     def setSelectedDI(self, di):

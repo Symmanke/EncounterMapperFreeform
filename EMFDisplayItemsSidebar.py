@@ -28,11 +28,11 @@ from DisplayAttributeList import DisplayAttributeList
 
 
 class DisplayItemSidebar(QFrame):
-    def __init__(self):
+    def __init__(self, editor=None):
         super(DisplayItemSidebar, self).__init__()
-        self.diList = DisplayItemList()
+        self.diList = DisplayItemList(editor)
         self.diList.diSelectionChanged.connect(self.updateDISelection)
-        self.diAttributes = DisplayAttributeList()
+        self.diAttributes = DisplayAttributeList(editor)
         self.splitter = QSplitter(Qt.Vertical)
 
         self.splitter.addWidget(self.diList)
@@ -50,9 +50,10 @@ class DisplayItemSidebar(QFrame):
 class DisplayItemList(QFrame):
     diSelectionChanged = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, editor):
         super(DisplayItemList, self).__init__()
         self.displayItems = []
+        self.nodeEditor = editor
         self.diEditor = None
         self.diDialog = None
         self.listWidget = QListWidget()
@@ -67,6 +68,7 @@ class DisplayItemList(QFrame):
         self.delBtn = QPushButton("del")
         self.selAllBtn = QPushButton("Select All")
         self.addSelBtn = QPushButton("Add to Selection")
+        self.addSelBtn.clicked.connect(self.addDIToSelection)
 
         layout = QGridLayout()
         layout.addWidget(QLabel("Display Items:"), 0, 0, 1, 2)
@@ -113,6 +115,11 @@ class DisplayItemList(QFrame):
 
     def updateCurrentDI(self):
         self.diSelectionChanged.emit()
+
+    def addDIToSelection(self):
+        cr = self.listWidget.currentRow()
+        if cr >= 0:
+            self.nodeEditor.addDIToSelection(self.displayItems[cr])
 
     def openDIEdit(self):
         self.diDialog = QDialog()
