@@ -28,6 +28,43 @@ import math
 from EMFDIPropertyHolder import DIPropertyHolder
 
 
+class NodeLayer(DIPropertyHolder):
+    TYPE_NODE = "NODE"
+    TYPE_LINE = "LINE"
+    TYPE_SHAPE = "SHAPE"
+
+    def __init__(self):
+        self.layerItems = {
+            NodeLayer.TYPE_NODE: [],
+            NodeLayer.TYPE_LINE: [],
+            NodeLayer.TYPE_SHAPE: []
+        }
+
+        self.layerImage = None
+
+    def addItemToLayer(self, type, item):
+        typeList = self.layerItems[type]
+        if item not in typeList:
+            typeList.append(item)
+
+    def addItemsToLayer(self, type, items):
+        typeList = self.layerItems[type]
+        typeList.extend(items)
+
+    def removeFromLayer(self, type, item):
+        if item in self.layerItems[type]:
+            self.layerItems[type].remove(item)
+
+    def getList(self, type):
+        return self.layerItems[type]
+
+    def setLayerImage(self, image):
+        self.layerImage = image
+
+    def getLayerImage(self):
+        return self.layerImage
+
+
 class EMFNode(DIPropertyHolder):
     def __init__(self, x, y):
         super(EMFNode, self).__init__()
