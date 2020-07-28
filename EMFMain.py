@@ -27,14 +27,16 @@ from PyQt5.QtGui import QPalette
 
 from EMFDisplayItemsSidebar import DisplayItemSidebar
 from EMFNodeEditor import NodeEditor
+from EMFMap import EMFMap
 
 
 class EMFMain(QWidget):
     def __init__(self):
         super(EMFMain, self).__init__()
+        self.map = EMFMap(720, 720)
         self.splitter = QSplitter(Qt.Horizontal)
-        self.editor = NodeEditor(720, 720)
-        self.sideBar = DisplayItemSidebar(self.editor)
+        self.editor = NodeEditor(self.map, 720, 720)
+        self.sideBar = DisplayItemSidebar(self.map)
         scroll = QScrollArea()
         scroll.setBackgroundRole(QPalette.Dark)
         scroll.setWidget(self.editor)

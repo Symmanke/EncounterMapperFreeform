@@ -20,14 +20,12 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel
-from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPalette
 
 
 # Display the full set of attributes and their values if possible for an
 # EMFDisplayItem
 class EMFDisplayItemWidget(QFrame):
-    # displayItemUpdated = pyqtSignal()
 
     def __init__(self, displayItem):
         super(EMFDisplayItemWidget, self).__init__()
@@ -72,23 +70,30 @@ class EMFDisplayItemWidget(QFrame):
 class EMFDisplayItem:
     def __init__(self, name, allowedClass):
         self.name = name
+        self.parentMap = None
         self.allowedClassItems = allowedClass
         self.propertyItems = []
         self.sharedAttributes = {}
         self.individualAttributes = {}
+
+    def setMap(self, map):
+        self.parentMap = map
 
     def addItems(self, items):
         for item in items:
             self.addItem(item)
 
     def addItem(self, item):
-        if item not in self.propertyItems:
+        if (isinstance(item, self.allowedClassItems) and
+                item not in self.propertyItems):
             self.propertyItems.append(item)
             item.addIndividualAttributes(self)
-            print("Property Added!")
 
     def getAllowedClass(self):
         return self.allowedClassItems
+
+    def getPropertyItems(self):
+        return self.propertyItems
 
     def getSharedAttributes(self):
         return self.sharedAttributes
@@ -101,7 +106,9 @@ class EMFDisplayItem:
 
     def valueUpdated(self, attrName):
         if attrName in self.individualAttributes:
-            for item in self.propertyItems:
+            selectedItems = self.parentMap.getSelectedItems()
+            itemSet = set(selectedItems).intersection(self.propertyItems)
+            for item in itemSet:
                 item.updateAttribute(self, self.individualAttributes[attrName])
 
     def drawDisplay(self, painter, layer, simple=True):

@@ -41,6 +41,7 @@ class NodeEditor(QWidget):
 
     def __init__(self, map, width=600, height=400):
         super(NodeEditor, self).__init__()
+        self.showDebug = True
         self.map = map
         self.map.selectionUpdated.connect(self.mapSelectionUpdated)
         self.layerWidth = width
@@ -64,16 +65,10 @@ class NodeEditor(QWidget):
         shape = EMFShape(nodes)
         self.map.addItemToCurrentLayer(NodeLayer.TYPE_SHAPE, shape)
         self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, nodes)
-        # self.addShapeLines(shape)
 
         self.setFixedWidth(width)
         self.setFixedHeight(height)
         self.setMouseTracking(True)
-
-    # def addShapeLines(self, shape):
-    #     for addedLine in shape.lines():
-    #         self.map.addItemToCurrentLayer(
-    #             NodeLayer.TYPE_LINE, addedLine)
 
     def resizeEditField(self, newWidth, newHeight, xOff=0, yOff=0):
         self.setFixedWidth(newWidth)
@@ -503,6 +498,9 @@ class NodeEditor(QWidget):
         elif event.key() == Qt.Key_X:
             # and event.modifiers == Qt.ShiftModifier:
             self.deleteItems(event.modifiers() == Qt.ShiftModifier)
+        elif event.key() == Qt.Key_T:
+            # toggle what we show
+            self.showDebug = not self.showDebug
 
         self.repaint()
 
@@ -516,26 +514,26 @@ class NodeEditor(QWidget):
         painter.setPen(Qt.white)
         painter.drawRect(0, 0, self.layerWidth, self.layerHeight)
         # draw the list
-        if self.diList is not None:
-            dis = self.diList.getDIs()
-            diImg = self.currentNodeLayer.redrawLayerImage(dis)
+        diList = self.map.getDisplayItems()
+        if diList is not None:
+            diImg = self.map.getCurrentLayer().redrawLayerImage(diList)
             painter.drawImage(0, 0, diImg)
+        if self.showDebug:
+            painter.setOpacity(.3)
+            painter.setPen(Qt.black)
+            painter.drawText(10, 10, self.selectedType)
+            painter.drawText(10, 20, self.interactMode)
+            self.drawShapes(painter)
+            self.drawLines(painter)
+            self.drawNodes(painter)
 
-        painter.setOpacity(.3)
-        painter.setPen(Qt.black)
-        painter.drawText(10, 10, self.selectedType)
-        painter.drawText(10, 20, self.interactMode)
-        self.drawShapes(painter)
-        self.drawLines(painter)
-        self.drawNodes(painter)
-
-        self.drawMedianNode(painter)
-        self.drawInteractionNode(painter)
-        painter.drawText(50, 10, "{}".format(self.currentMousePos))
-        if self.interactMode == NodeEditor.INTERACT_ROTATE:
-            newDelta = EMFNodeHelper.nodeAngles(
-                self.formerMedian, self.currentMousePos)
-            painter.drawText(10, 30, "{}".format(newDelta))
+            self.drawMedianNode(painter)
+            self.drawInteractionNode(painter)
+            painter.drawText(50, 10, "{}".format(self.currentMousePos))
+            if self.interactMode == NodeEditor.INTERACT_ROTATE:
+                newDelta = EMFNodeHelper.nodeAngles(
+                    self.formerMedian, self.currentMousePos)
+                painter.drawText(10, 30, "{}".format(newDelta))
 
     # //////////////// #
     # DRAWING ELEMENTS #

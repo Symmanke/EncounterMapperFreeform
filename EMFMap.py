@@ -21,13 +21,22 @@ If not, see <https://www.gnu.org/licenses/>.
 from PyQt5.QtCore import pyqtSignal, QObject
 
 
-from EMFNodes import NodeLayer
+from EMFNodes import NodeLayer, EMFNode, EMFLine, EMFShape
 
 
 class EMFMap(QObject):
 
     selectionUpdated = pyqtSignal()
     layerUpdated = pyqtSignal()
+    displayItemsUpdated = pyqtSignal()
+    selectedDIUpdated = pyqtSignal()
+
+    CLASS_TO_TYPE = {
+        NodeLayer: "NONE",
+        EMFNode: NodeLayer.TYPE_NODE,
+        EMFLine: NodeLayer.TYPE_LINE,
+        EMFShape: NodeLayer.TYPE_SHAPE
+    }
 
     def __init__(self, width=600, height=400):
         super(EMFMap, self).__init__()
@@ -39,6 +48,11 @@ class EMFMap(QObject):
 
         # DIs
         self.displayItems = []
+        self.selectedDI = -1
+
+    # ////////////////////////////// #
+    # Node and Layer Element Methods #
+    # ////////////////////////////// #
 
     def addItemsToCurrentLayer(self, type, items):
         self.nodeLayers[self.currentLayer].addItemsToLayer(type, items)
@@ -59,6 +73,14 @@ class EMFMap(QObject):
             self.selectedItems.append(item)
         if emitSignal:
             self.selectionUpdated.emit()
+
+    def selectItemsFromDI(self, di):
+        newSelection = []
+        listType = EMFMap.CLASS_TO_TYPE(di.getAllowedClass)
+        if listType in self.nodeLayers:
+            newSelection = list(set(di.getPropertyItems()).intersection(
+                self.nodeLayers[listType]))
+        self.setSelectedItems(newSelection)
 
     def setSelectedItems(self, items):
         self.selectedItems.clear()
@@ -82,6 +104,63 @@ class EMFMap(QObject):
 
     def getCurrentLayerItems(self, type):
         return self.nodeLayers[self.currentLayer].getList(type)
+
+    # /////////////////////////////// #
+    # Display Item Management Methods #
+    # /////////////////////////////// #
+
+    def getDisplayItems(self):
+        return self.displayItems
+
+    def getSelectedDI(self):
+        di = None
+        if self.selectedDI > 0:
+            di = self.displayItems[self.selectedDI]
+        return di
+
+    def setSelectedDI(self, index):
+        self.selectedDI = index
+
+    def getSelectedDIIndex(self):
+        return self.selectedDI
+
+    def getDisplayItem(self, index):
+        return self.displayItems[index]
+
+    def getDisplayItemsFromSelection(self):
+        dis = set(self.nodeLayers[self.currentLayer].currentDIs())
+        for item in self.selectedItems:
+            dis = dis.union(item.currentDIs())
+        return dis
+
+    def addDisplayItem(self, di):
+        if di not in self.displayItems:
+            self.displayItems.append(di)
+            di.setMap(self)
+            self.selectedDI = len(self.displayItems) - 1
+
+    def applyDIToSelection(self, di):
+        if di.getAllowedClass() == NodeLayer:
+            di.addItem(self.nodeLayers[self.currentLayer])
+        else:
+            di.addItems(self.selectedItems)
+
+    def removeDisplayItem(self, di):
+        pass
+
+    def shiftDisplayItem(self, index, shiftUp):
+        if shiftUp:
+            if index > 0:
+                shift = self.displayItems[index]
+                self.displayItems[index] = self.displayItems[index-1]
+                self.displayItems[index-1] = shift
+                self.displayItemsUpdated.emit()
+        else:
+            if index > -1 and index != len(self.displayItems)-1:
+                shift = self.displayItems[index]
+                self.displayItems[index] = self.displayItems[index+1]
+                self.displayItems[index+1] = shift
+                self.displayItemsUpdated.emit()
 
     def getLayerImages(self):
         layerImgList = []

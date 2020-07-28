@@ -28,11 +28,10 @@ from DisplayAttributeList import DisplayAttributeList
 
 
 class DisplayItemSidebar(QFrame):
-    def __init__(self, editor=None):
+    def __init__(self, map=None):
         super(DisplayItemSidebar, self).__init__()
-        self.diList = DisplayItemList(editor)
-        self.diList.diSelectionChanged.connect(self.updateDISelection)
-        self.diAttributes = DisplayAttributeList(editor)
+        self.diList = DisplayItemList(map)
+        self.diAttributes = DisplayAttributeList(map)
         self.splitter = QSplitter(Qt.Vertical)
 
         self.splitter.addWidget(self.diList)
@@ -42,19 +41,12 @@ class DisplayItemSidebar(QFrame):
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
-    def updateDISelection(self):
-        self.selectedDI = self.diList.getSelectedDI()
-        self.diAttributes.setSelectedDI(self.selectedDI)
-
 
 class DisplayItemList(QFrame):
-    diSelectionChanged = pyqtSignal()
 
-    def __init__(self, editor):
+    def __init__(self, map):
         super(DisplayItemList, self).__init__()
-        self.displayItems = []
-        self.nodeEditor = editor
-        self.nodeEditor.setDIList(self)
+        self.map = map
         self.diEditor = None
         self.diDialog = None
         self.listWidget = QListWidget()
@@ -68,6 +60,7 @@ class DisplayItemList(QFrame):
         self.addBtn.clicked.connect(self.openDIEdit)
         self.delBtn = QPushButton("del")
         self.selAllBtn = QPushButton("Select All")
+        self.selAllBtn.clicked.connect(self.selectFromDI)
         self.addSelBtn = QPushButton("Add to Selection")
         self.addSelBtn.clicked.connect(self.addDIToSelection)
 
@@ -84,20 +77,11 @@ class DisplayItemList(QFrame):
         self.setLayout(layout)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
 
-    def getSelectedItems(self):
-        items = []
-        if self.nodeEditor is not None:
-            items = self.nodeEditor.getSelectetItems()
-        return items
-
-    def getDIs(self):
-        return self.displayItems
-
-    def updateDIList(self, index=-1):
+    def updateDIList(self):
         self.listWidget.clear()
-        for di in self.displayItems:
+        for di in self.map.getDisplayItems():
             self.listWidget.addItem(di.getName())
-        self.listWidget.setCurrentRow(index)
+        self.listWidget.setCurrentRow(self.map.getSelectedDIIndex())
         self.listWidget.repaint()
 
     def shiftItemUp(self):
@@ -106,7 +90,7 @@ class DisplayItemList(QFrame):
             shift = self.displayItems[index]
             self.displayItems[index] = self.displayItems[index-1]
             self.displayItems[index-1] = shift
-            self.updateDIList(index-1)
+            self.updateDIList()
 
     def shiftItemDown(self):
         index = self.listWidget.currentRow()
@@ -114,22 +98,20 @@ class DisplayItemList(QFrame):
             shift = self.displayItems[index]
             self.displayItems[index] = self.displayItems[index+1]
             self.displayItems[index+1] = shift
-            self.updateDIList(index+1)
-
-    def getSelectedDI(self):
-        di = None
-        if (len(self.displayItems) > 0
-                and self.listWidget.currentRow() >= 0):
-            di = self.displayItems[self.listWidget.currentRow()]
-        return di
+            self.updateDIList()
 
     def updateCurrentDI(self):
-        self.diSelectionChanged.emit()
+        self.map.setSelectedDI(self.listWidget.currentRow())
+
+    def selectFromDI(self):
+        di = self.map.getSelectedDI()
+        if di is not None:
+            self.map.selectItemsFromDI(di)
 
     def addDIToSelection(self):
         cr = self.listWidget.currentRow()
         if cr >= 0:
-            self.nodeEditor.addDIToSelection(self.displayItems[cr])
+            self.map.applyDIToSelection(self.map.getDisplayItem(cr))
 
     def openDIEdit(self):
         self.diDialog = QDialog()
@@ -144,12 +126,13 @@ class DisplayItemList(QFrame):
         self.diDialog.exec_()
 
     def applyDIEdit(self):
-        self.displayItems.append(self.diEditor.getSelectedDI())
+        self.map.addDisplayItem(self.diEditor.getSelectedDI(self.map))
+        # self.displayItems.append()
         self.diDialog.close()
         self.diDialog = None
         self.diEditor = None
-        self.updateDIList(len(self.displayItems)-1)
-        self.diSelectionChanged.emit()
+        self.updateDIList()
+        # self.diSelectionChanged.emit()
 
     def cancelDIEdit(self):
         self.diDialog.close()

@@ -77,6 +77,6 @@ class DisplayItemPicker(EditAction):
         layout.addWidget(btnWidget)
         self.setLayout(layout)
 
-    def getSelectedDI(self):
+    def getSelectedDI(self, map):
         diSelection = DisplayItemPicker.DIClasses[self.diPicker.currentText()]
         return diSelection(self.nameEdit.text())
