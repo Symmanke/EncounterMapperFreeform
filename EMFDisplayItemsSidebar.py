@@ -54,6 +54,7 @@ class DisplayItemList(QFrame):
         super(DisplayItemList, self).__init__()
         self.displayItems = []
         self.nodeEditor = editor
+        self.nodeEditor.setDIList(self)
         self.diEditor = None
         self.diDialog = None
         self.listWidget = QListWidget()
@@ -82,6 +83,15 @@ class DisplayItemList(QFrame):
 
         self.setLayout(layout)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+
+    def getSelectedItems(self):
+        items = []
+        if self.nodeEditor is not None:
+            items = self.nodeEditor.getSelectetItems()
+        return items
+
+    def getDIs(self):
+        return self.displayItems
 
     def updateDIList(self, index=-1):
         self.listWidget.clear()

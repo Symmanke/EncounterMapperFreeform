@@ -70,8 +70,6 @@ class EMFDisplayItemWidget(QFrame):
 # Each DisplayItem has attributes. Some attributes will be shared by all,
 # While
 class EMFDisplayItem:
-    displayItemUpdated = pyqtSignal()
-
     def __init__(self, name, allowedClass):
         self.name = name
         self.allowedClassItems = allowedClass
@@ -107,6 +105,7 @@ class EMFDisplayItem:
                 item.updateAttribute(self, self.individualAttributes[attrName])
 
     def drawDisplay(self, painter, layer, simple=True):
+        print(type(self))
         drawMethod = self.drawSimple if simple else self.drawComplex
         for item in self.propertyItems:
             drawMethod(painter, item)

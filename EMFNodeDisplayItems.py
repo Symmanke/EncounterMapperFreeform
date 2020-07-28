@@ -23,6 +23,7 @@ from EMFNodes import EMFNode
 from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
                           ColorAttributeWidget, SpinboxAttributeWidget,
                           FilePickerAttributeWidget)
+from PyQt5.QtGui import QPen, QBrush, QColor
 
 
 class ColorCircleDisplay(EMFDisplayItem):
@@ -30,9 +31,9 @@ class ColorCircleDisplay(EMFDisplayItem):
         super(ColorCircleDisplay, self).__init__(name, EMFNode)
         self.sharedAttributes = {
             "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+                                      {"startValue": QColor(0, 0, 0)}),
             "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+                                      {"startValue": QColor(0, 0, 0)}),
         }
         self.individualAttributes = {
             "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
@@ -45,6 +46,21 @@ class ColorCircleDisplay(EMFDisplayItem):
                                      "maximum": 100,
                                      "startValue": 100}),
         }
+
+    def drawSimple(self, painter, item):
+        # draw a circle node with the given size
+        print("IMPLEMENTED!")
+        point = item.point()
+        values = item.diValues(self)
+        radius = values["Size"]
+        opacity = values["Opacity"]
+        painter.setOpacity(opacity / 100)
+        lineColor = self.sharedAttributes["LineColor"].getValue()
+        fillColor = self.sharedAttributes["FillColor"].getValue()
+        painter.setPen(QPen(lineColor))
+        painter.setBrush(QBrush(fillColor))
+        painter.drawEllipse(point.x()-radius, point.y()-radius, radius * 2,
+                            radius * 2)
 
 
 class ImageDisplay(EMFDisplayItem):

@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget)
 import math
 
 from EMFNodes import NodeLayer, EMFNode, EMFShape, EMFLine, EMFNodeHelper
-# from EMFNodeLayer import
+from EMFMap import EMFMap
 
 
 class NodeEditor(QWidget):
@@ -39,11 +39,13 @@ class NodeEditor(QWidget):
     selectTypeSwitched = pyqtSignal()
     modeTypeSwitched = pyqtSignal()
 
-    def __init__(self, width=600, height=400):
+    def __init__(self, map, width=600, height=400):
         super(NodeEditor, self).__init__()
+        self.map = map
+        self.map.selectionUpdated.connect(self.mapSelectionUpdated)
         self.layerWidth = width
         self.layerHeight = height
-        self.currentNodeLayer = NodeLayer(width, height)
+        # self.currentNodeLayer = NodeLayer(width, height)
         self.selectedType = NodeLayer.TYPE_NODE
         self.selectedItems = []
         self.selectedNodes = None
@@ -52,6 +54,7 @@ class NodeEditor(QWidget):
         self.interactMode = NodeEditor.INTERACT_SELECT
         self.interactNode = None
         self.currentMousePos = EMFNode(0, 0)
+        self.diList = None
 
         nodes = (
             EMFNode(72, 72),
@@ -59,24 +62,30 @@ class NodeEditor(QWidget):
             EMFNode(144, 144),
             EMFNode(72, 144))
         shape = EMFShape(nodes)
-        self.currentNodeLayer.addItemToLayer(NodeLayer.TYPE_SHAPE, shape)
-        self.currentNodeLayer.addItemsToLayer(NodeLayer.TYPE_NODE, nodes)
-        self.addShapeLines(shape)
+        self.map.addItemToCurrentLayer(NodeLayer.TYPE_SHAPE, shape)
+        self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, nodes)
+        # self.addShapeLines(shape)
 
         self.setFixedWidth(width)
         self.setFixedHeight(height)
         self.setMouseTracking(True)
 
-    def addShapeLines(self, shape):
-        for addedLine in shape.lines():
-            self.currentNodeLayer.addItemToLayer(
-                NodeLayer.TYPE_LINE, addedLine)
+    # def addShapeLines(self, shape):
+    #     for addedLine in shape.lines():
+    #         self.map.addItemToCurrentLayer(
+    #             NodeLayer.TYPE_LINE, addedLine)
 
     def resizeEditField(self, newWidth, newHeight, xOff=0, yOff=0):
         self.setFixedWidth(newWidth)
         self.setFixedHeight(newHeight)
 
-    # DI STUFF
+    def getSelectedItems(self):
+        return self.selectedItems
+
+        # DI STUFF
+    def setDIList(self, diList):
+        self.diList = diList
+
     def addDIToSelection(self, di):
         if di.getAllowedClass() == NodeLayer:
             di.addItem(self.currentNodeLayer)
@@ -93,9 +102,13 @@ class NodeEditor(QWidget):
     # INTERACTIONS #
     # //////////// #
 
+    def mapSelectionUpdated(self):
+        self.selectedItems = self.map.getSelectedItems()
+        self.updateMedianPoint()
+
     # Select a singular item to add to existing items.
     def selectItem(self, inclusiveSelect=False):
-        itemTypeList = self.currentNodeLayer.getList(self.selectedType)
+        itemTypeList = self.map.getCurrentLayerItems(self.selectedType)
         selectedItem = None
         for item in itemTypeList:
             if (item.inSelectRange(self.currentMousePos)
@@ -103,44 +116,31 @@ class NodeEditor(QWidget):
                 selectedItem = item
                 break
         if not inclusiveSelect:
-            self.selectedItems.clear()
+            self.map.clearSelectedItems()
         if selectedItem is not None:
-            self.selectedItems.append(selectedItem)
-            self.selectedItemsUpdated.emit()
+            self.map.addItemToSelection(selectedItem)
         self.updateMedianPoint()
 
     # deselect either a singlular or all selected items
 
     def deselectItem(self, singleDeselect=False):
         if singleDeselect:
-            itemTypeList = self.currentNodeLayer.getList(self.selectedType)
+            itemTypeList = self.map.getCurrentLayerItems(self.selectedType)
             for item in itemTypeList:
                 if (item.inSelectRange(self.currentMousePos)
                         and item in self.selectedItems):
-                    self.selectedItems.remove(item)
-                    self.selectedItemsUpdated.emit()
+                    self.map.removeSelectedItem(item)
                     break
         else:
-            self.selectedItems.clear()
-            self.selectedItemsUpdated.emit()
-        self.updateMedianPoint()
+            self.map.clearSelectedItems()
 
     # toggle between selecting all and no nodes
     def selectAll(self):
-        itemTypeList = self.currentNodeLayer.getList(self.selectedType)
+        itemTypeList = self.map.getCurrentLayerItems(self.selectedType)
         if len(itemTypeList) == len(self.selectedItems):
-            self.selectedItems.clear()
-            self.selectedItemsUpdated.emit()
+            self.map.clearSelectedItems()
         else:
-            self.selectedItems.clear()
-            self.selectedItems.extend(itemTypeList)
-            self.selectedItemsUpdated.emit()
-        self.updateMedianPoint()
-
-    # remove all items from selectedItems
-    def clearSelectedItems(self):
-        self.selectedItems.clear()
-        self.medianNode = None
+            self.map.addItemsToSelection(itemTypeList)
 
     # form a new line or shape from the existing selected items
     def formItem(self):
@@ -151,14 +151,11 @@ class NodeEditor(QWidget):
                 if (len(nodes) == 2 and
                         len(EMFNodeHelper.existingLine(
                         nodes[0], nodes[1])) == 0):
-                    self.currentNodeLayer.addItemToLayer(
+                    self.map.addItemToCurrentLayer(
                         NodeLayer.TYPE_LINE, EMFLine(nodes[0], nodes[1]))
-                elif len(nodes) > 2:
+                elif EMFNodeHelper.existingShape(nodes) is None:
                     shape = EMFShape(nodes)
-                    self.currentNodeLayer.addItemToLayer(
-                        NodeLayer.TYPE_SHAPE, shape)
-                    self.addShapeLines(shape)
-                    pass
+                    self.map.addItemToCurrentLayer(NodeLayer.TYPE_SHAPE, shape)
 
     def deleteItems(self, deleteTouchingNodes=False):
         if self.interactMode == NodeEditor.INTERACT_SELECT:
@@ -172,9 +169,7 @@ class NodeEditor(QWidget):
                               NodeLayer.TYPE_SHAPE:
                               self.deleteShapes}
                 delMethods[self.selectedType](self.selectedItems)
-            self.selectedItems.clear()
-            self.selectedItemsUpdated.emit()
-            self.updateMedianPoint()
+            self.map.clearSelectedItems()
 
     # Delete all selected nodes. also removes all touching lines and shapes
     def deleteNodes(self, nodes):
@@ -189,13 +184,13 @@ class NodeEditor(QWidget):
         # remove shapes
         for shape in shapesTBD:
             shape.shapeDeleted()
-            self.currentNodeLayer.removeFromLayer(NodeLayer.TYPE_SHAPE, shape)
+            self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_SHAPE, shape)
         for line in linesTBD:
             # delete lines
             line.lineDeleted()
-            self.currentNodeLayer.removeFromLayer(NodeLayer.TYPE_LINE, line)
+            self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_LINE, line)
         for node in nodes:
-            self.currentNodeLayer.removeFromLayer(NodeLayer.TYPE_NODE, node)
+            self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_NODE, node)
         pass
 
     # Delete all selected lines. also removes all touching shapes
@@ -210,18 +205,18 @@ class NodeEditor(QWidget):
         for shape in shapesTBD:
             shape.shapeDeleted()
             # self.shapes.remove(shape)
-            self.currentNodeLayer.removeFromLayer(NodeLayer.TYPE_SHAPE, shape)
+            self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_SHAPE, shape)
         for line in lines:
             # delete lines
             line.lineDeleted()
             # self.lines.remove(line)
-            self.currentNodeLayer.removeFromLayer(NodeLayer.TYPE_LINE, line)
+            self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_LINE, line)
 
     # delete all selected shapes. Does not affect nodes or lines.
     def deleteShapes(self, shapes):
         for shape in shapes:
             shape.shapeDeleted()
-            self.currentNodeLayer.removeFromLayer(NodeLayer.TYPE_SHAPE, shape)
+            self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_SHAPE, shape)
 
     def extrudeItems(self):
         if self.interactMode == NodeEditor.INTERACT_SELECT:
@@ -237,7 +232,7 @@ class NodeEditor(QWidget):
     def addNode(self):
         addedNode = EMFNode(
             self.currentMousePos.x(), self.currentMousePos.y())
-        self.currentNodeLayer.addItemToLayer(NodeLayer.TYPE_NODE, addedNode)
+        self.map.addItemToCurrentLayer(NodeLayer.TYPE_NODE, addedNode)
         self.selectedItems.append(addedNode)
 
     # Form a line out of each Node
@@ -249,12 +244,11 @@ class NodeEditor(QWidget):
             for node in nodes:
                 newNode = EMFNode.createFromNode(node)
                 newNodes.append(newNode)
-                self.currentNodeLayer.addItemToLayer(
+                self.map.addItemToCurrentLayer(
                     NodeLayer.TYPE_NODE, newNode)
-                self.currentNodeLayer.addItemToLayer(
+                self.map.addItemToCurrentLayer(
                     NodeLayer.TYPE_LINE, EMFLine(node, newNode))
-            self.selectedItems.clear()
-            self.selectedItems.extend(newNodes)
+            self.map.setSelectedItems(newNodes)
 
     # form a shape out of each line
     def extrudeLines(self, lines):
@@ -269,22 +263,21 @@ class NodeEditor(QWidget):
                         dupeNode = EMFNode.createFromNode(node)
                         newNodes.append(dupeNode)
                         oldNodes.append(node)
-                        self.currentNodeLayer.addItemToLayer(
+                        self.map.addItemToCurrentLayer(
                             NodeLayer.TYPE_LINE, EMFLine(node, dupeNode))
                         lineNodes.append(dupeNode)
                     else:
                         lineNodes.append(newNodes[oldNodes.index(node)])
                 newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
-                self.currentNodeLayer.addItemToLayer(
+                self.map.addItemToCurrentLayer(
                     NodeLayer.TYPE_SHAPE,
                     EMFShape.createFromLines((line, newLines[-1])))
 
-            self.currentNodeLayer.addItemsToLayer(
+            self.map.addItemsToCurrentLayer(
                 NodeLayer.TYPE_NODE, newNodes)
-            self.currentNodeLayer.addItemsToLayer(
+            self.map.addItemsToCurrentLayer(
                 NodeLayer.TYPE_LINE, newLines)
-            self.selectedItems.clear()
-            self.selectedItems.extend(newLines)
+            self.map.setSelectedItems(newLines)
 
     # Duplicate the shape
     def extrudeShapes(self, shapes):
@@ -299,8 +292,6 @@ class NodeEditor(QWidget):
                            NodeLayer.TYPE_SHAPE:
                            self.duplicateShapes}
             dupeMethods[self.selectedType](self.selectedItems)
-            self.selectedItemsUpdated.emit()
-            self.updateMedianPoint()
             self.beginInteraction(NodeEditor.INTERACT_GRAB)
 
     # duplicate a selected series of nodes. doesn't duplicate the connected
@@ -310,10 +301,8 @@ class NodeEditor(QWidget):
         for node in nodes:
             newNodes.append(EMFNode.createFromNode(node))
 
-        self.currentNodeLayer.addItemsToLayer(NodeLayer.TYPE_NODE, newNodes)
-        # self.nodes.extend(newNodes)
-        self.selectedItems.clear()
-        self.selectedItems.extend(newNodes)
+        self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, newNodes)
+        self.map.setSelectedItems(newNodes)
 
     # Duplicate a series of lines. doesn't duplicate the shapes
     def duplicateLines(self, lines):
@@ -333,11 +322,10 @@ class NodeEditor(QWidget):
                     lineNodes.append(newNodes[oldNodes.index(node)])
             newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
 
-        self.currentNodeLayer.addItemsToLayer(NodeLayer.TYPE_NODE, newNodes)
-        self.currentNodeLayer.addItemsToLayer(NodeLayer.TYPE_LINE, newLines)
+        self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, newNodes)
+        self.map.addItemsToCurrentLayer(NodeLayer.TYPE_LINE, newLines)
 
-        self.selectedItems.clear()
-        self.selectedItems.extend(newLines)
+        self.map.setSelectedItems(newLines)
 
     def duplicateShapes(self, shapes):
         newShapes = []
@@ -354,14 +342,10 @@ class NodeEditor(QWidget):
                 else:
                     shapeNodes.append(newNodes[oldNodes.index(node)])
             newShapes.append(EMFShape(shapeNodes, False))
-            self.addShapeLines(newShapes[-1])
-        # self.nodes.extend(newNodes)
-        # self.shapes.extend(newShapes)
-        self.currentNodeLayer.addItemsToLayer(NodeLayer.TYPE_NODE, newNodes)
-        self.currentNodeLayer.addItemsToLayer(NodeLayer.TYPE_SHAPE, newShapes)
+        self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, newNodes)
+        self.map.addItemsToCurrentLayer(NodeLayer.TYPE_SHAPE, newShapes)
 
-        self.selectedItems.clear()
-        self.selectedItems.extend(newShapes)
+        self.map.setSelectedItems(newShapes)
 
     # update to a new median point. should do when grabbing nodes, or
     # chaning the number of selected items
@@ -376,7 +360,7 @@ class NodeEditor(QWidget):
         if (self.selectedType != selectionType
                 and self.interactMode == NodeEditor.INTERACT_SELECT):
             self.selectedType = selectionType
-            self.clearSelectedItems()
+            self.map.clearSelectedItems()
 
     # drag the selected nodes based on the offset between the initial mouse
     # position and current one
@@ -531,6 +515,13 @@ class NodeEditor(QWidget):
         painter.setBrush(Qt.white)
         painter.setPen(Qt.white)
         painter.drawRect(0, 0, self.layerWidth, self.layerHeight)
+        # draw the list
+        if self.diList is not None:
+            dis = self.diList.getDIs()
+            diImg = self.currentNodeLayer.redrawLayerImage(dis)
+            painter.drawImage(0, 0, diImg)
+
+        painter.setOpacity(.3)
         painter.setPen(Qt.black)
         painter.drawText(10, 10, self.selectedType)
         painter.drawText(10, 20, self.interactMode)
@@ -555,7 +546,7 @@ class NodeEditor(QWidget):
         drawColor = (Qt.blue if self.selectedType ==
                      NodeLayer.TYPE_SHAPE else Qt.lightGray)
 
-        for shape in self.currentNodeLayer.getList(NodeLayer.TYPE_SHAPE):
+        for shape in self.map.getCurrentLayerItems(NodeLayer.TYPE_SHAPE):
             dc = Qt.red if shape in self.selectedItems else drawColor
             painter.setPen(dc)
             painter.setBrush(dc)
@@ -566,7 +557,7 @@ class NodeEditor(QWidget):
         drawColor = (Qt.blue if self.selectedType ==
                      NodeLayer.TYPE_LINE else Qt.black)
 
-        for line in self.currentNodeLayer.getList(NodeLayer.TYPE_LINE):
+        for line in self.map.getCurrentLayerItems(NodeLayer.TYPE_LINE):
             dc = Qt.red if line in self.selectedItems else drawColor
             painter.setPen(dc)
             painter.setBrush(dc)
@@ -579,7 +570,7 @@ class NodeEditor(QWidget):
                      NodeLayer.TYPE_NODE else Qt.darkGray)
         radius = 5
         d = radius * 2
-        for node in self.currentNodeLayer.getList(NodeLayer.TYPE_NODE):
+        for node in self.map.getCurrentLayerItems(NodeLayer.TYPE_NODE):
             dc = Qt.red if node in self.selectedItems else drawColor
             painter.setPen(dc)
             painter.setBrush(dc)
@@ -607,7 +598,8 @@ class NodeEditor(QWidget):
 
 def main():
     app = QApplication([])
-    mainWidget = NodeEditor()
+    map = EMFMap()
+    mainWidget = NodeEditor(map)
     mainWidget.show()
     app.exec_()
 

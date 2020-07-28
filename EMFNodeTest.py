@@ -490,6 +490,7 @@ class EMFNodeTest(QWidget):
 
     def paintEvent(self, paintEvent):
         painter = QPainter(self)
+        painter.setOpacity(0.4)
         painter.setPen(Qt.black)
         painter.drawText(10, 10, self.selectedType)
         painter.drawText(10, 20, self.interactMode)
