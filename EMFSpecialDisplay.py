@@ -31,8 +31,37 @@ from EMFNodes import NodeLayer
 class GridDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(GridDisplay, self).__init__(name, NodeLayer)
-        self.sharedAttributes = {}
+        self.sharedAttributes = {
+            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
+                                      {"startValue": QColor(0, 0, 0)}),
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
+                                    {"minimum": 0,
+                                     "maximum": 100,
+                                     "startValue": 100}),
+        }
         self.individualAttributes = {}
+
+    def drawSimple(self, painter, item):
+        dimensions = item.getDimensions()
+        pattern = (5, 3, 3)
+        # pc = Qt.black
+        pc = self.sharedAttributes["LineColor"].getValue()
+        opacity = self.sharedAttributes["Opacity"].getValue()
+        painter.setOpacity(opacity / 100)
+        painter.setPen(pc)
+        tileSize = 72
+        xr = dimensions[0]//tileSize + 1
+        yr = dimensions[1]//tileSize + 1
+        # print(pattern)
+        patternLen = len(pattern)
+        for x in range(xr):
+            painter.setPen(QPen(pc, pattern[x % patternLen]))
+            xd = int(x*tileSize)
+            painter.drawLine(xd, 0, xd, dimensions[1])
+        for y in range(yr):
+            painter.setPen(QPen(pc, pattern[y % patternLen]))
+            yd = int(y*tileSize)
+            painter.drawLine(0, yd, dimensions[0], yd)
 
 
 class ColorBGDisplay(EMFDisplayItem):

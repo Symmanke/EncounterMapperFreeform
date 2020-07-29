@@ -23,7 +23,8 @@ from EMFNodes import EMFNode
 from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
                           ColorAttributeWidget, SpinboxAttributeWidget,
                           FilePickerAttributeWidget)
-from PyQt5.QtGui import QPen, QBrush, QColor
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPen, QBrush, QColor, QPixmap, QTransform
 
 
 class ColorCircleDisplay(EMFDisplayItem):
@@ -67,7 +68,10 @@ class ImageDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageDisplay, self).__init__(name, EMFNode)
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
+                                  {"startValue": {
+                                      "path": "Choose a file...",
+                                      "image": None}})
 
         }
 
@@ -82,7 +86,39 @@ class ImageDisplay(EMFDisplayItem):
                                      {"minimum": -180,
                                       "maximum": 180,
                                       "startValue": 0}),
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
+                                    {"minimum": 0,
+                                     "maximum": 100,
+                                     "startValue": 100}),
         }
+
+    def drawSimple(self, painter, item):
+        # draw the shape's polygon
+        point = item.point()
+        values = item.diValues(self)
+
+        pm = self.sharedAttributes["Image"].getValue()["image"]
+        pm = QPixmap("error_image.png") if pm is None else pm
+
+        # opacity values
+        opacity = values["Opacity"]
+        painter.setOpacity(opacity / 100)
+
+        # transform values
+        rotate = values["Rotation"]
+        scale = values["SizeRatio"] / 100
+        transform = QTransform()
+
+        transform.rotate(rotate)
+        transform.scale(scale, scale)
+        # transform.translate(point.x() - pm.width()/2,
+        #                     point.y() - pm.height()/2)
+        # painter.setTransform(transform)
+        pm = pm.transformed(transform)  # , Qt.KeepAspectRatioByExpanding)
+
+        painter.drawPixmap(point.x() - pm.width()/2,
+                           point.y() - pm.height()/2,
+                           pm)
 
 
 class CircleShadowDisplay(EMFDisplayItem):

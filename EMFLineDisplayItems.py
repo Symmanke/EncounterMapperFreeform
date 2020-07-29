@@ -18,8 +18,12 @@ You should have received a copy of the GNU General Public License
 along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPen, QBrush, QColor, QPixmap, QTransform, QPainter
+
+
 from EMFDisplayProperty import EMFDisplayItem
-from EMFNodes import EMFLine
+from EMFNodes import EMFLine, EMFNodeHelper
 from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
                           ColorAttributeWidget, SpinboxAttributeWidget,
                           FilePickerAttributeWidget)
@@ -51,11 +55,58 @@ class ImageLineDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageLineDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
+                                  {"startValue": {
+                                      "path": "Choose a file...",
+                                      "image": None}})
 
         }
 
-        self.individualAttributes = {}
+        self.individualAttributes = {
+            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
+                                    {"minimum": 0,
+                                     "maximum": 100,
+                                     "startValue": 100}),
+        }
+
+    def drawSimple(self, painter, item):
+        # draw the shape's polygon
+        points = item.nodes()
+        comparison = EMFNodeHelper.nodeComparison(points[0], points[1], True)
+        median = EMFNodeHelper.medianNode(points)
+        values = item.diValues(self)
+
+        pm = self.sharedAttributes["Image"].getValue()["image"]
+        pm = QPixmap("error_image.png") if pm is None else pm
+        thickness = pm.height()
+        wallpm = QPixmap(comparison[3] + thickness, pm.height())
+        wallpm.fill(QColor(0, 0, 0, 0))
+        wallPainter = QPainter(wallpm)
+        wallPainter.setBrush(QBrush(pm))
+        wallPainter.setPen(Qt.NoPen)
+        wallPainter.drawEllipse(0, 0, thickness, thickness)
+        wallPainter.drawEllipse(wallpm.width() - thickness, 0,
+                                thickness, thickness)
+        wallPainter.drawRect(thickness/2, 0, comparison[3], thickness)
+        wallPainter.end()
+
+        # opacity values
+        opacity = values["Opacity"]
+        painter.setOpacity(opacity / 100)
+
+        # transform values
+        transform = QTransform()
+
+        transform.rotate(comparison[2]-90)
+        # transform.scale(scale, scale)
+        # transform.translate(point.x() - pm.width()/2,
+        #                     point.y() - pm.height()/2)
+        # painter.setTransform(transform)
+        wallpm = wallpm.transformed(transform)
+
+        painter.drawPixmap(median.x() - wallpm.width()/2,
+                           median.y() - wallpm.height()/2,
+                           wallpm)
 
 
 class ColorDoorDisplay(EMFDisplayItem):

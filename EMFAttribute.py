@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (QWidget, QSlider, QLabel, QHBoxLayout,
                              QSpinBox, QFileDialog, QPushButton, QDialog)
-from PyQt5.QtGui import QPalette, QColor, QImage
+from PyQt5.QtGui import QPalette, QColor, QPixmap
 
 from EMFColorPicker import ColorPicker
 
@@ -137,7 +137,7 @@ class FilePickerAttributeWidget(EMFAttributeWidget):
             if "/" in pathName:
                 pathName = pathName.split("/")[-1]
             self.fileLabel.setText(pathName)
-            img = QImage(pathToOpen[0])
+            img = QPixmap(pathToOpen[0])
             self.updateValue({"path": pathToOpen[0], "image": img})
 
 
