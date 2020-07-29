@@ -359,6 +359,18 @@ class EMFNodeHelper:
         return EMFNode(avgNode.x(), avgNode.y())
 
     @classmethod
+    def pointOnLine(cls, line, pos):
+        lineNode = QPoint(0, 0)
+        nodes = line.nodes()
+
+        lineNode = lineNode - nodes[0].point()
+        lineNode = lineNode + nodes[1].point()
+
+        lineNode *= pos
+        return EMFNode(nodes[0].x() + lineNode.x(),
+                       nodes[0].y() + lineNode.y())
+
+    @classmethod
     def listOfNodes(cls, itemList):
 
         nodeList = []

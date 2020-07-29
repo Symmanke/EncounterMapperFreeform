@@ -19,7 +19,7 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPen, QBrush, QColor, QImage
+from PyQt5.QtGui import QPen, QBrush, QColor, QPixmap
 
 from EMFDisplayProperty import EMFDisplayItem
 from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
@@ -114,7 +114,7 @@ class ImageBGDisplay(EMFDisplayItem):
         opacity = values["Opacity"]
         painter.setOpacity(opacity / 100)
         img = self.sharedAttributes["Image"].getValue()["image"]
-        img = QImage("error_image.png") if img is None else img
+        img = QPixmap("error_image.png") if img is None else img
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(img))
         painter.drawRect(0, 0, dimensions[0], dimensions[1])

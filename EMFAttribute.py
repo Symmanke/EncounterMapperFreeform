@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import (QWidget, QSlider, QLabel, QHBoxLayout,
+from PyQt5.QtWidgets import (QWidget, QSlider, QLabel, QHBoxLayout, QCheckBox,
                              QSpinBox, QFileDialog, QPushButton, QDialog)
 from PyQt5.QtGui import QPalette, QColor, QPixmap
 
@@ -102,13 +102,23 @@ class SpinboxAttributeWidget(EMFAttributeWidget):
         val = attr.getValue()
         val = params["startValue"] if val is None else val
         self.spin.setValue(val)
-        # if len(self.attributes) == 1:
-        #     self.spin.setValue(attributes[0].getValue())
-        # else:
-        #     self.spin.setValue(params["startValue"])
         self.spin.valueChanged.connect(self.updateValue)
         layout = QHBoxLayout()
         layout.addWidget(self.spin)
+        self.setLayout(layout)
+
+
+class CheckBoxAttributeWidget(EMFAttributeWidget):
+    def __init__(self, attr, params):
+        super(CheckBoxAttributeWidget, self).__init__(attr, params)
+        self.check = QCheckBox("")
+        val = attr.getValue()
+        val = params["startValue"] if val is None else val
+        self.check.setChecked(val)
+        self.check.toggled.connect(
+            lambda: self.updateValue(self.check.isChecked()))
+        layout = QHBoxLayout()
+        layout.addWidget(self.check)
         self.setLayout(layout)
 
 

@@ -24,7 +24,8 @@ from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
                           ColorAttributeWidget, SpinboxAttributeWidget,
                           FilePickerAttributeWidget)
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPen, QBrush, QColor, QPixmap, QTransform
+from PyQt5.QtGui import (QPen, QBrush, QColor, QPixmap, QTransform,
+                         QRadialGradient)
 
 
 class ColorCircleDisplay(EMFDisplayItem):
@@ -50,7 +51,6 @@ class ColorCircleDisplay(EMFDisplayItem):
 
     def drawSimple(self, painter, item):
         # draw a circle node with the given size
-        # print("IMPLEMENTED!")
         point = item.point()
         values = item.diValues(self)
         radius = values["Size"]
@@ -111,10 +111,7 @@ class ImageDisplay(EMFDisplayItem):
 
         transform.rotate(rotate)
         transform.scale(scale, scale)
-        # transform.translate(point.x() - pm.width()/2,
-        #                     point.y() - pm.height()/2)
-        # painter.setTransform(transform)
-        pm = pm.transformed(transform)  # , Qt.KeepAspectRatioByExpanding)
+        pm = pm.transformed(transform)
 
         painter.drawPixmap(point.x() - pm.width()/2,
                            point.y() - pm.height()/2,
@@ -126,7 +123,7 @@ class CircleShadowDisplay(EMFDisplayItem):
         super(CircleShadowDisplay, self).__init__(name, EMFNode)
         self.sharedAttributes = {
             "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+                                      {"startValue": QColor(0, 0, 0)}),
         }
         self.individualAttributes = {
             "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
@@ -137,11 +134,38 @@ class CircleShadowDisplay(EMFDisplayItem):
             "StartOpacity": EMFAttribute(self, "StartOpacity",
                                          ScrollbarAttributeWidget,
                                          {"minimum": 0,
-                                          "maximum": 100,
-                                          "startValue": 50}),
+                                          "maximum": 255,
+                                          "startValue": 125}),
             "EndOpacity": EMFAttribute(self, "EndOpacity",
                                        ScrollbarAttributeWidget,
                                        {"minimum": 0,
-                                        "maximum": 100,
+                                        "maximum": 255,
                                         "startValue": 0}),
         }
+
+    def drawSimple(self, painter, item):
+        # draw a circle node with the given gradient size
+        point = item.point()
+        values = item.diValues(self)
+        radius = values["Size"]
+        sOpacity = values["StartOpacity"]
+        eOpacity = values["EndOpacity"]
+
+        # set gradient colors
+        fillColor = self.sharedAttributes["FillColor"].getValue()
+        sFill = QColor(fillColor.red(), fillColor.green(),
+                       fillColor.blue(), sOpacity)
+        eFill = QColor(fillColor.red(), fillColor.green(),
+                       fillColor.blue(), eOpacity)
+
+        rGradient = QRadialGradient(point.x(), point.y(),
+                                    radius)
+        rGradient.setColorAt(0, sFill)
+        rGradient.setColorAt(0.95, eFill)
+        rGradient.setColorAt(1, QColor(0, 0, 0, 0))
+
+        painter.setOpacity(1)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(rGradient))
+        painter.drawEllipse(point.x()-radius, point.y()-radius, radius * 2,
+                            radius * 2)

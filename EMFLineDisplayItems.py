@@ -19,14 +19,16 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPen, QBrush, QColor, QPixmap, QTransform, QPainter
+from PyQt5.QtGui import (QPen, QBrush, QColor, QPixmap, QTransform, QPainter,
+                         QRadialGradient, QLinearGradient, QGradient)
 
 
 from EMFDisplayProperty import EMFDisplayItem
 from EMFNodes import EMFLine, EMFNodeHelper
 from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
                           ColorAttributeWidget, SpinboxAttributeWidget,
-                          FilePickerAttributeWidget)
+                          FilePickerAttributeWidget, CheckBoxAttributeWidget)
+import math
 
 
 class ColorLineDisplay(EMFDisplayItem):
@@ -67,6 +69,9 @@ class ImageLineDisplay(EMFDisplayItem):
                                     {"minimum": 0,
                                      "maximum": 100,
                                      "startValue": 100}),
+            "ShowEndCaps": EMFAttribute(self, "ShowEndCaps",
+                                        CheckBoxAttributeWidget,
+                                        {"startValue": True})
         }
 
     def drawSimple(self, painter, item):
@@ -79,18 +84,28 @@ class ImageLineDisplay(EMFDisplayItem):
         pm = self.sharedAttributes["Image"].getValue()["image"]
         pm = QPixmap("error_image.png") if pm is None else pm
         thickness = pm.height()
-        wallpm = QPixmap(comparison[3] + thickness, pm.height())
-        wallpm.fill(QColor(0, 0, 0, 0))
-        wallPainter = QPainter(wallpm)
-        wallPainter.setBrush(QBrush(pm))
-        wallPainter.setPen(Qt.NoPen)
-        wallPainter.drawEllipse(0, 0, thickness, thickness)
-        wallPainter.drawEllipse(wallpm.width() - thickness, 0,
-                                thickness, thickness)
-        wallPainter.drawRect(thickness/2, 0, comparison[3], thickness)
-        wallPainter.end()
+        wallpm = None
+        if values["ShowEndCaps"]:
+            wallpm = QPixmap(comparison[3] + thickness, pm.height())
+            wallpm.fill(QColor(0, 0, 0, 0))
+            wallPainter = QPainter(wallpm)
+            wallPainter.setBrush(QBrush(pm))
+            wallPainter.setPen(Qt.NoPen)
+            wallPainter.drawEllipse(0, 0, thickness, thickness)
+            wallPainter.drawEllipse(wallpm.width() - thickness, 0,
+                                    thickness, thickness)
+            wallPainter.drawRect(thickness/2, 0, comparison[3], thickness)
+            wallPainter.end()
+        else:
+            wallpm = QPixmap(comparison[3], pm.height())
+            wallpm.fill(QColor(0, 0, 0, 0))
+            wallPainter = QPainter(wallpm)
+            wallPainter.setBrush(QBrush(pm))
+            wallPainter.setPen(Qt.NoPen)
+            wallPainter.drawRect(0, 0, comparison[3], thickness)
+            wallPainter.end()
 
-        # opacity values
+            # opacity values
         opacity = values["Opacity"]
         painter.setOpacity(opacity / 100)
 
@@ -98,10 +113,6 @@ class ImageLineDisplay(EMFDisplayItem):
         transform = QTransform()
 
         transform.rotate(comparison[2]-90)
-        # transform.scale(scale, scale)
-        # transform.translate(point.x() - pm.width()/2,
-        #                     point.y() - pm.height()/2)
-        # painter.setTransform(transform)
         wallpm = wallpm.transformed(transform)
 
         painter.drawPixmap(median.x() - wallpm.width()/2,
@@ -144,7 +155,10 @@ class ImageDoorDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageDoorDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
+                                  {"startValue": {
+                                      "path": "Choose a file...",
+                                      "image": None}})
 
         }
 
@@ -156,13 +170,32 @@ class ImageDoorDisplay(EMFDisplayItem):
                                       "startValue": 50}),
         }
 
+    def drawSimple(self, painter, item):
+        points = item.nodes()
+        comparison = EMFNodeHelper.nodeComparison(points[0], points[1], True)
+
+        values = item.diValues(self)
+        drawPos = EMFNodeHelper.pointOnLine(item, values["Position"]/100)
+
+        pm = self.sharedAttributes["Image"].getValue()["image"]
+        pm = QPixmap("error_image.png") if pm is None else pm
+
+        transform = QTransform()
+
+        transform.rotate(comparison[2]-90)
+        pm = pm.transformed(transform)
+
+        painter.drawPixmap(drawPos.x() - pm.width()/2,
+                           drawPos.y() - pm.height()/2,
+                           pm)
+
 
 class LineShadowRadiusDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(LineShadowRadiusDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
             "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+                                      {"startValue": QColor(0, 0, 0)}),
         }
         self.individualAttributes = {
             "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
@@ -173,14 +206,91 @@ class LineShadowRadiusDisplay(EMFDisplayItem):
             "StartOpacity": EMFAttribute(self, "StartOpacity",
                                          ScrollbarAttributeWidget,
                                          {"minimum": 0,
-                                          "maximum": 100,
-                                          "startValue": 50}),
+                                          "maximum": 255,
+                                          "startValue": 125}),
             "EndOpacity": EMFAttribute(self, "EndOpacity",
                                        ScrollbarAttributeWidget,
                                        {"minimum": 0,
-                                        "maximum": 100,
+                                        "maximum": 255,
                                         "startValue": 0}),
+            "ShowEndCaps": EMFAttribute(self, "ShowEndCaps",
+                                        CheckBoxAttributeWidget,
+                                        {"startValue": True})
         }
+
+    def drawSimple(self, painter, item):
+        points = item.nodes()
+        comparison = EMFNodeHelper.nodeComparison(points[0], points[1], True)
+        median = EMFNodeHelper.medianNode(points)
+
+        values = item.diValues(self)
+        thickness = values["Size"]
+        sOpacity = values["StartOpacity"]
+        eOpacity = values["EndOpacity"]
+        fillColor = self.sharedAttributes["FillColor"].getValue()
+        sFill = QColor(fillColor.red(), fillColor.green(),
+                       fillColor.blue(), sOpacity)
+        eFill = QColor(fillColor.red(), fillColor.green(),
+                       fillColor.blue(), eOpacity)
+        # Create the gradients
+        lg = QLinearGradient(0, thickness/2, 0, thickness)
+        lg.setSpread(QGradient.ReflectSpread)
+        lg.setColorAt(0, sFill)
+        lg.setColorAt(1, eFill)
+
+        pm = None
+
+        if values["ShowEndCaps"]:
+            rg1 = QRadialGradient(thickness/2, thickness/2, thickness/2)
+            rg1.setColorAt(0, sFill)
+            rg1.setColorAt(1, eFill)
+
+            rg2 = QRadialGradient(comparison[3] + thickness/2,
+                                  thickness/2, thickness/2)
+            rg2.setColorAt(0, sFill)
+            rg2.setColorAt(1, eFill)
+
+            pm = QPixmap(comparison[3] + thickness, thickness)
+            noColor = QColor(0, 0, 0, 0)
+            pm.fill(noColor)
+            semi = 2880  # 16 * 180, b/c drawPie is silly
+            quarter = 1440
+
+            pmPainter = QPainter(pm)
+            pmPainter.setPen(Qt.NoPen)
+
+            pmPainter.setBrush(rg1)
+            pmPainter.drawPie(0, 0, thickness, thickness, quarter, semi)
+            pmPainter.setBrush(rg2)
+            pmPainter.drawPie(pm.width() - thickness, 0,
+                              thickness, thickness, quarter, -semi)
+
+            pmPainter.setBrush(lg)
+            pmPainter.drawRect(math.ceil(thickness / 2),
+                               0, comparison[3], thickness)
+            pmPainter.end()
+        else:
+            pm = QPixmap(comparison[3], thickness)
+            noColor = QColor(0, 0, 0, 0)
+            pm.fill(noColor)
+
+            pmPainter = QPainter(pm)
+            pmPainter.setPen(Qt.NoPen)
+
+            pmPainter.setBrush(lg)
+            pmPainter.drawRect(0, 0, comparison[3], thickness)
+            pmPainter.end()
+
+        # set gradient colors
+
+        transform = QTransform()
+
+        transform.rotate(comparison[2]-90)
+        pm = pm.transformed(transform)
+
+        painter.drawPixmap(median.x() - pm.width()/2,
+                           median.y() - pm.height()/2,
+                           pm)
 
 
 class LineShadowLengthDisplay(EMFDisplayItem):
@@ -188,22 +298,86 @@ class LineShadowLengthDisplay(EMFDisplayItem):
         super(LineShadowLengthDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
             "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+                                      {"startValue": QColor(0, 0, 0)}),
         }
         self.individualAttributes = {
             "Width": EMFAttribute(self, "Width", ScrollbarAttributeWidget,
                                   {"minimum": 0,
-                                   "maximum": 36,
+                                   "maximum": 360,
                                    "startValue": 24}),
 
             "StartOpacity": EMFAttribute(self, "StartOpacity",
                                          ScrollbarAttributeWidget,
                                          {"minimum": 0,
-                                          "maximum": 100,
-                                          "startValue": 50}),
+                                          "maximum": 255,
+                                          "startValue": 125}),
             "EndOpacity": EMFAttribute(self, "EndOpacity",
                                        ScrollbarAttributeWidget,
                                        {"minimum": 0,
-                                        "maximum": 100,
+                                        "maximum": 255,
                                         "startValue": 0}),
+            "ShowEndCaps": EMFAttribute(self, "ShowEndCaps",
+                                        CheckBoxAttributeWidget,
+                                        {"startValue": True})
         }
+
+    def drawSimple(self, painter, item):
+        points = item.nodes()
+        comparison = EMFNodeHelper.nodeComparison(points[0], points[1], True)
+        median = EMFNodeHelper.medianNode(points)
+
+        values = item.diValues(self)
+        thickness = values["Width"]
+        sOpacity = values["StartOpacity"]
+        eOpacity = values["EndOpacity"]
+        fillColor = self.sharedAttributes["FillColor"].getValue()
+        sFill = QColor(fillColor.red(), fillColor.green(),
+                       fillColor.blue(), sOpacity)
+        eFill = QColor(fillColor.red(), fillColor.green(),
+                       fillColor.blue(), eOpacity)
+        # Create the gradient
+
+        # Set linear Gradient
+        pm = None
+        if values["ShowEndCaps"]:
+            gradient = QLinearGradient(thickness/2, 0,
+                                       comparison[3]+thickness/2, 0)
+            gradient.setColorAt(0, sFill)
+            gradient.setColorAt(1, eFill)
+
+            semi = 2880  # 16 * 180, b/c drawPie is silly
+            quarter = 1440
+            pm = QPixmap(comparison[3] + thickness, thickness)
+            pm.fill(QColor(0, 0, 0, 0))
+            pmPainter = QPainter(pm)
+            pmPainter.setBrush(gradient)
+            pmPainter.setPen(Qt.NoPen)
+            pmPainter.drawPie(0, 0, thickness, thickness, quarter, semi)
+            pmPainter.drawPie(pm.width() - thickness, 0,
+                              thickness, thickness, quarter, -semi)
+            pmPainter.drawRect(math.ceil(thickness/2),
+                               0, comparison[3], thickness)
+            pmPainter.end()
+        else:
+            gradient = QLinearGradient(0, 0, comparison[3], 0)
+            gradient.setColorAt(0, sFill)
+            gradient.setColorAt(1, eFill)
+
+            pm = QPixmap(comparison[3], thickness)
+            pm.fill(QColor(0, 0, 0, 0))
+            pmPainter = QPainter(pm)
+            pmPainter.setBrush(gradient)
+            pmPainter.setPen(Qt.NoPen)
+            pmPainter.drawRect(0, 0, comparison[3], thickness)
+            pmPainter.end()
+
+        # set gradient colors
+
+        transform = QTransform()
+
+        transform.rotate(comparison[2]-90)
+        pm = pm.transformed(transform)
+
+        painter.drawPixmap(median.x() - pm.width()/2,
+                           median.y() - pm.height()/2,
+                           pm)
