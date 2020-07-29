@@ -76,7 +76,7 @@ class EMFMap(QObject):
 
     def selectItemsFromDI(self, di):
         newSelection = []
-        listType = EMFMap.CLASS_TO_TYPE(di.getAllowedClass)
+        listType = EMFMap.CLASS_TO_TYPE[di.getAllowedClass]
         if listType in self.nodeLayers:
             newSelection = list(set(di.getPropertyItems()).intersection(
                 self.nodeLayers[listType]))
@@ -108,6 +108,9 @@ class EMFMap(QObject):
     # /////////////////////////////// #
     # Display Item Management Methods #
     # /////////////////////////////// #
+
+    def diUpdated(self):
+        self.displayItemsUpdated.emit()
 
     def getDisplayItems(self):
         return self.displayItems
@@ -144,6 +147,7 @@ class EMFMap(QObject):
             di.addItem(self.nodeLayers[self.currentLayer])
         else:
             di.addItems(self.selectedItems)
+        self.displayItemsUpdated.emit()
 
     def removeDisplayItem(self, di):
         pass
@@ -154,12 +158,14 @@ class EMFMap(QObject):
                 shift = self.displayItems[index]
                 self.displayItems[index] = self.displayItems[index-1]
                 self.displayItems[index-1] = shift
+                self.selectedDI = index - 1
                 self.displayItemsUpdated.emit()
         else:
             if index > -1 and index != len(self.displayItems)-1:
                 shift = self.displayItems[index]
                 self.displayItems[index] = self.displayItems[index+1]
                 self.displayItems[index+1] = shift
+                self.selectedDI = index + 1
                 self.displayItemsUpdated.emit()
 
     def getLayerImages(self):

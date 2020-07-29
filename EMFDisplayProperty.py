@@ -110,9 +110,9 @@ class EMFDisplayItem:
             itemSet = set(selectedItems).intersection(self.propertyItems)
             for item in itemSet:
                 item.updateAttribute(self, self.individualAttributes[attrName])
+        self.parentMap.diUpdated()
 
     def drawDisplay(self, painter, layer, simple=True):
-        print(type(self))
         drawMethod = self.drawSimple if simple else self.drawComplex
         for item in self.propertyItems:
             drawMethod(painter, item)

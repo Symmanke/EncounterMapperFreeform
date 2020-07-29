@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPen, QBrush, QColor, QImage
+
 from EMFDisplayProperty import EMFDisplayItem
 from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
                           ColorAttributeWidget,
@@ -37,7 +40,7 @@ class ColorBGDisplay(EMFDisplayItem):
         super(ColorBGDisplay, self).__init__(name, NodeLayer)
         self.sharedAttributes = {
             "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+                                      {"startValue": QColor(0, 0, 0)}),
         }
         self.individualAttributes = {
             "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
@@ -45,14 +48,27 @@ class ColorBGDisplay(EMFDisplayItem):
                                      "maximum": 100,
                                      "startValue": 100}),
         }
+
+    def drawSimple(self, painter, item):
+        # draw the shape's polygon
+        dimensions = item.getDimensions()
+        values = item.diValues(self)
+        opacity = values["Opacity"]
+        painter.setOpacity(opacity / 100)
+        fillColor = self.sharedAttributes["FillColor"].getValue()
+        painter.setPen(QPen(fillColor))
+        painter.setBrush(QBrush(fillColor))
+        painter.drawRect(0, 0, dimensions[0], dimensions[1])
 
 
 class ImageBGDisplay(EMFDisplayItem):
     def __init__(self, name):
         super(ImageBGDisplay, self).__init__(name, NodeLayer)
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget, {})
-
+            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
+                                  {"startValue": {
+                                      "path": "Choose a file...",
+                                      "image": None}})
         }
 
         self.individualAttributes = {
@@ -61,3 +77,15 @@ class ImageBGDisplay(EMFDisplayItem):
                                      "maximum": 100,
                                      "startValue": 100}),
         }
+
+    def drawSimple(self, painter, item):
+        # draw the shape's polygon
+        dimensions = item.getDimensions()
+        values = item.diValues(self)
+        opacity = values["Opacity"]
+        painter.setOpacity(opacity / 100)
+        img = self.sharedAttributes["Image"].getValue()["image"]
+        img = QImage("error_image.png") if img is None else img
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(img))
+        painter.drawRect(0, 0, dimensions[0], dimensions[1])

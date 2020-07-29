@@ -19,7 +19,7 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QLabel, QPushButton,
                              QListWidget, QGridLayout, QFrame, QSplitter,
                              QVBoxLayout, QDialog)
@@ -47,6 +47,7 @@ class DisplayItemList(QFrame):
     def __init__(self, map):
         super(DisplayItemList, self).__init__()
         self.map = map
+        self.map.displayItemsUpdated.connect(self.updateDIList)
         self.diEditor = None
         self.diDialog = None
         self.listWidget = QListWidget()
@@ -87,18 +88,12 @@ class DisplayItemList(QFrame):
     def shiftItemUp(self):
         index = self.listWidget.currentRow()
         if index > 0:
-            shift = self.displayItems[index]
-            self.displayItems[index] = self.displayItems[index-1]
-            self.displayItems[index-1] = shift
-            self.updateDIList()
+            self.map.shiftDisplayItem(index, True)
 
     def shiftItemDown(self):
         index = self.listWidget.currentRow()
-        if index > -1 and index != len(self.displayItems)-1:
-            shift = self.displayItems[index]
-            self.displayItems[index] = self.displayItems[index+1]
-            self.displayItems[index+1] = shift
-            self.updateDIList()
+        if index > -1:
+            self.map.shiftDisplayItem(index, False)
 
     def updateCurrentDI(self):
         self.map.setSelectedDI(self.listWidget.currentRow())

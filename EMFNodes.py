@@ -79,8 +79,7 @@ class NodeLayer(DIPropertyHolder):
         imgPainter = QPainter(self.layerImage)
         # imgPainter.begin()
         # Draw onto image
-        for di in dis:
-            print(type(di))
+        for di in reversed(dis):
             di.drawDisplay(imgPainter, self)
         imgPainter.end()
         return self.layerImage

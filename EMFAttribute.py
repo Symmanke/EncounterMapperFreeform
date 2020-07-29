@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (QWidget, QSlider, QLabel, QHBoxLayout,
                              QSpinBox, QFileDialog, QPushButton, QDialog)
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor, QImage
 
 from EMFColorPicker import ColorPicker
 
@@ -116,7 +116,7 @@ class FilePickerAttributeWidget(EMFAttributeWidget):
     def __init__(self, attr, params):
         super(FilePickerAttributeWidget, self).__init__(attr, params)
         val = attr.getValue()
-        pathName = "Choose a file..." if val is None else val
+        pathName = val["path"]
         if "/" in pathName:
             pathName = pathName.split("/")[-1]
 
@@ -137,7 +137,8 @@ class FilePickerAttributeWidget(EMFAttributeWidget):
             if "/" in pathName:
                 pathName = pathName.split("/")[-1]
             self.fileLabel.setText(pathName)
-            self.updateValue(pathToOpen[0])
+            img = QImage(pathToOpen[0])
+            self.updateValue({"path": pathToOpen[0], "image": img})
 
 
 class ColorAttributeWidget(EMFAttributeWidget):

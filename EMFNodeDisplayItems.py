@@ -49,7 +49,7 @@ class ColorCircleDisplay(EMFDisplayItem):
 
     def drawSimple(self, painter, item):
         # draw a circle node with the given size
-        print("IMPLEMENTED!")
+        # print("IMPLEMENTED!")
         point = item.point()
         values = item.diValues(self)
         radius = values["Size"]
