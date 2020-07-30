@@ -186,6 +186,7 @@ class NodeEditor(QWidget):
             line.lineDeleted()
             self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_LINE, line)
         for node in nodes:
+            node.nodeDeleted()
             self.map.removeItemFromCurrentLayer(NodeLayer.TYPE_NODE, node)
         pass
 

@@ -57,13 +57,16 @@ class DisplayItemList(QFrame):
         self.upBtn.clicked.connect(self.shiftItemUp)
         self.downBtn = QPushButton("down")
         self.downBtn.clicked.connect(self.shiftItemDown)
-        self.addBtn = QPushButton("add")
+        self.addBtn = QPushButton("new")
         self.addBtn.clicked.connect(self.openDIEdit)
         self.delBtn = QPushButton("del")
+        self.delBtn.clicked.connect(self.removeSelectedDI)
         self.selAllBtn = QPushButton("Select All")
         self.selAllBtn.clicked.connect(self.selectFromDI)
         self.addSelBtn = QPushButton("Add to Selection")
         self.addSelBtn.clicked.connect(self.addDIToSelection)
+        self.delSelBtn = QPushButton("Remove From Selection")
+        self.delSelBtn.clicked.connect(self.removeDIFromSelection)
 
         layout = QGridLayout()
         layout.addWidget(QLabel("Display Items:"), 0, 0, 1, 2)
@@ -72,8 +75,8 @@ class DisplayItemList(QFrame):
         layout.addWidget(self.downBtn, 2, 1)
         layout.addWidget(self.addBtn, 3, 0)
         layout.addWidget(self.delBtn, 3, 1)
-        layout.addWidget(self.selAllBtn, 4, 0)
-        layout.addWidget(self.addSelBtn, 4, 1)
+        layout.addWidget(self.addSelBtn, 4, 0)
+        layout.addWidget(self.delSelBtn, 4, 1)
 
         self.setLayout(layout)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
@@ -107,6 +110,18 @@ class DisplayItemList(QFrame):
         cr = self.listWidget.currentRow()
         if cr >= 0:
             self.map.applyDIToSelection(self.map.getDisplayItem(cr))
+
+    def removeDIFromSelection(self):
+        cr = self.listWidget.currentRow()
+        if cr >= 0:
+            di = self.map.getDisplayItem(cr)
+            for item in self.map.getSelectedItems():
+                item.removeDI(di)
+
+    def removeSelectedDI(self):
+        cr = self.listWidget.currentRow()
+        if cr >= 0:
+            self.map.removeDisplayItem(self.map.getDisplayItem(cr))
 
     def openDIEdit(self):
         self.diDialog = QDialog()

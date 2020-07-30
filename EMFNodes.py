@@ -137,7 +137,6 @@ class EMFNode(DIPropertyHolder):
                          self.offsetNode.x()*size)
         self.nPoint.setY(self.transformComparison[0].y() +
                          self.offsetNode.y()*size)
-        pass
 
     def x(self):
         return self.nPoint.x()
@@ -178,6 +177,9 @@ class EMFNode(DIPropertyHolder):
 
     def inSelectRange(self, point, threshold=100):
         return EMFNodeHelper.nodeDistanceSqr(point, self) <= threshold
+
+    def nodeDeleted(self):
+        self.removeAllDIs()
 
 
 class EMFLine(DIPropertyHolder):
@@ -221,6 +223,7 @@ class EMFLine(DIPropertyHolder):
     def lineDeleted(self):
         for node in self.lineNodes:
             node.removeLineRef(self)
+        self.removeAllDIs()
 
 
 class EMFShape(DIPropertyHolder):
@@ -284,7 +287,7 @@ class EMFShape(DIPropertyHolder):
         for node in self.shapeNodes:
             node.removeShapeRef(self)
         self.nodePoly = False
-        pass
+        self.removeAllDIs()
 
 
 class EMFNodeHelper:

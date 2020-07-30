@@ -41,8 +41,15 @@ class DIPropertyHolder:
         if di in self.diProperties:
             self.diProperties[di][attr.getName()] = attr.getValue()
 
+    def removeAllDIs(self):
+        for di in self.diProperties:
+            di.removeItem(self)
+        self.diProperties.clear()
+
     def removeDI(self, di):
-        self.diProperties.pop(di, None)
+        if di in self.diProperties:
+            di.removeItem(self)
+            self.diProperties.pop(di)
 
     def diValues(self, di):
         values = None

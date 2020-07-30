@@ -150,7 +150,11 @@ class EMFMap(QObject):
         self.displayItemsUpdated.emit()
 
     def removeDisplayItem(self, di):
-        pass
+        if di in self.displayItems:
+            di.removeAllItems()
+            self.displayItems.remove(di)
+            self.selectedDI = -1
+            self.displayItemsUpdated.emit()
 
     def shiftDisplayItem(self, index, shiftUp):
         if shiftUp:

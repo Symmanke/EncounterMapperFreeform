@@ -89,6 +89,14 @@ class EMFDisplayItem:
             self.propertyItems.append(item)
             item.addIndividualAttributes(self)
 
+    def removeAllItems(self):
+        for item in self.propertyItems:
+            item.removeDI(self)
+
+    def removeItem(self, item):
+        if item in self.propertyItems:
+            self.propertyItems.remove(item)
+
     def getAllowedClass(self):
         return self.allowedClassItems
 
