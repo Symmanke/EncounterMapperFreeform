@@ -71,7 +71,15 @@ class ImageLineDisplay(EMFDisplayItem):
                                      "startValue": 100}),
             "ShowEndCaps": EMFAttribute(self, "ShowEndCaps",
                                         CheckBoxAttributeWidget,
-                                        {"startValue": True})
+                                        {"startValue": True}),
+            "EndCapRatio": EMFAttribute(self, "EndCapRatio",
+                                        ScrollbarAttributeWidget,
+                                        {"minimum": 0,
+                                         "maximum": 100,
+                                         "startValue": 100}),
+            "ReverseImage": EMFAttribute(self, "ReverseImage",
+                                         CheckBoxAttributeWidget,
+                                         {"startValue": False}),
         }
 
     def drawSimple(self, painter, item):
@@ -86,15 +94,19 @@ class ImageLineDisplay(EMFDisplayItem):
         thickness = pm.height()
         wallpm = None
         if values["ShowEndCaps"]:
-            wallpm = QPixmap(comparison[3] + thickness, pm.height())
+            ratio = values["EndCapRatio"] / 100
+            ecThickness = math.ceil(thickness*ratio)
+            wallpm = QPixmap(comparison[3] + ecThickness, pm.height())
             wallpm.fill(QColor(0, 0, 0, 0))
             wallPainter = QPainter(wallpm)
             wallPainter.setBrush(QBrush(pm))
             wallPainter.setPen(Qt.NoPen)
-            wallPainter.drawEllipse(0, 0, thickness, thickness)
-            wallPainter.drawEllipse(wallpm.width() - thickness, 0,
-                                    thickness, thickness)
-            wallPainter.drawRect(thickness/2, 0, comparison[3], thickness)
+            wallPainter.drawEllipse(0, (thickness-ecThickness)/2,
+                                    ecThickness, ecThickness)
+            wallPainter.drawEllipse(wallpm.width() - ecThickness,
+                                    (thickness-ecThickness)/2,
+                                    ecThickness, ecThickness)
+            wallPainter.drawRect(ecThickness/2, 0, comparison[3], thickness)
             wallPainter.end()
         else:
             wallpm = QPixmap(comparison[3], pm.height())
@@ -112,7 +124,7 @@ class ImageLineDisplay(EMFDisplayItem):
         # transform values
         transform = QTransform()
 
-        transform.rotate(comparison[2]-90)
+        transform.rotate(comparison[2]-90 + 180 * values["ReverseImage"])
         wallpm = wallpm.transformed(transform)
 
         painter.drawPixmap(median.x() - wallpm.width()/2,
@@ -168,6 +180,19 @@ class ImageDoorDisplay(EMFDisplayItem):
                                      {"minimum": 0,
                                       "maximum": 100,
                                       "startValue": 50}),
+            "ReverseImage": EMFAttribute(self, "ReverseImage",
+                                         CheckBoxAttributeWidget,
+                                         {"startValue": False}),
+            "Number": EMFAttribute(self, "Number",
+                                   ScrollbarAttributeWidget,
+                                   {"minimum": 0,
+                                    "maximum": 5,
+                                    "startValue": 1}),
+            "Spacing": EMFAttribute(self, "Spacing",
+                                    ScrollbarAttributeWidget,
+                                    {"minimum": 0,
+                                     "maximum": 360,
+                                     "startValue": 0}),
         }
 
     def drawSimple(self, painter, item):
@@ -179,10 +204,24 @@ class ImageDoorDisplay(EMFDisplayItem):
 
         pm = self.sharedAttributes["Image"].getValue()["image"]
         pm = QPixmap("error_image.png") if pm is None else pm
+        num = values["Number"]
+        print("NUMBER: {}".format(num))
+        w = pm.width()
+        if num > 1:
+
+            wallPm = QPixmap(
+                w*num + values["Spacing"] * (num - 1), pm.height())
+            wallPm.fill(QColor(0, 0, 0, 0))
+            wallPainter = QPainter(wallPm)
+            for n in range(num):
+                print("{}".format(n))
+                wallPainter.drawPixmap((w+values["Spacing"]) * n, 0, pm)
+            wallPainter.end()
+            pm = wallPm
 
         transform = QTransform()
 
-        transform.rotate(comparison[2]-90)
+        transform.rotate(comparison[2]-90 + 180 * values["ReverseImage"])
         pm = pm.transformed(transform)
 
         painter.drawPixmap(drawPos.x() - pm.width()/2,

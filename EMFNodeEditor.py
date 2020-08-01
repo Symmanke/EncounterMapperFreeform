@@ -44,7 +44,7 @@ class NodeEditor(QWidget):
         self.showDebug = True
         self.map = map
         self.map.selectionUpdated.connect(self.mapSelectionUpdated)
-        self.map.displayItemsUpdated.connect(self.repaint)
+        self.map.displayItemValuesUpdated.connect(self.repaint)
         self.layerWidth = width
         self.layerHeight = height
         # self.currentNodeLayer = NodeLayer(width, height)

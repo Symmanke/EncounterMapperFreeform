@@ -22,6 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel
 from PyQt5.QtGui import QPalette
 
+from EMFNodes import NodeLayer
+
 
 # Display the full set of attributes and their values if possible for an
 # EMFDisplayItem
@@ -114,10 +116,18 @@ class EMFDisplayItem:
 
     def valueUpdated(self, attrName):
         if attrName in self.individualAttributes:
-            selectedItems = self.parentMap.getSelectedItems()
-            itemSet = set(selectedItems).intersection(self.propertyItems)
-            for item in itemSet:
-                item.updateAttribute(self, self.individualAttributes[attrName])
+            if self.allowedClassItems == NodeLayer:
+                curLayer = self.parentMap.getCurrentLayer()
+                if curLayer in self.propertyItems:
+                    curLayer.updateAttribute(
+                        self, self.individualAttributes[attrName])
+            else:
+                selectedItems = self.parentMap.getSelectedItems()
+                itemSet = set(selectedItems).intersection(self.propertyItems)
+                for item in itemSet:
+                    item.updateAttribute(self,
+                                         self.individualAttributes[attrName])
+
         self.parentMap.diUpdated()
 
     def drawDisplay(self, painter, layer, simple=True):

@@ -8,6 +8,7 @@ class DisplayAttributeList(QListWidget):
         super(DisplayAttributeList, self).__init__()
         self.map = map
         self.map.selectionUpdated.connect(self.updateDisplayedDIWS)
+        self.map.displayItemListUpdated.connect(self.updateDisplayedDIWS)
         self.selectedListDI = None
 
         self.updateDisplayedDIWS()
@@ -23,9 +24,11 @@ class DisplayAttributeList(QListWidget):
             self.addItem(listItem)
             self.setItemWidget(listItem, widget)
 
-        if self.selectedListDI is not None:
+        selDI = self.map.getSelectedDI()
+
+        if selDI is not None:
             addWidgetToList(QLabel("Selected Display Item:"))
-            addWidgetToList(EMFDisplayItemWidget(self.selectedListDI))
+            addWidgetToList(EMFDisplayItemWidget(selDI))
 
         dis = list(self.map.getDisplayItemsFromSelection())
         if len(dis) > 0:

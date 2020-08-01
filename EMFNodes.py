@@ -44,6 +44,7 @@ class NodeLayer(DIPropertyHolder):
         self.layerWidth = width
         self.layerHeight = height
         self.layerImage = None
+        self.needsRedraw = True
 
     def addItemToLayer(self, type, item):
         typeList = self.layerItems[type]
@@ -72,6 +73,9 @@ class NodeLayer(DIPropertyHolder):
     def getLayerImage(self):
         return self.layerImage
 
+    def setNeedRedraw(self):
+        self.needsRedraw = True
+
     def redrawLayerImage(self, dis):
         self.layerImage = QImage(self.layerWidth, self.layerHeight,
                                  QImage.Format_ARGB32)
@@ -82,6 +86,7 @@ class NodeLayer(DIPropertyHolder):
         for di in reversed(dis):
             di.drawDisplay(imgPainter, self)
         imgPainter.end()
+        self.needsRedraw = False
         return self.layerImage
 
 

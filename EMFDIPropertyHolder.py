@@ -18,9 +18,12 @@ You should have received a copy of the GNU General Public License
 along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
+from PyQt5.QtCore import pyqtSignal, QObject
 
 
-class DIPropertyHolder:
+class DIPropertyHolder(QObject):
+    propertyUpdated = pyqtSignal()
+
     def __init__(self):
         self.diProperties = {}
 

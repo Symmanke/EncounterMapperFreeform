@@ -39,9 +39,9 @@ class DisplayItemPicker(EditAction):
         "ImageDisplay": ImageDisplay,
         "CircleShadowDisplay": CircleShadowDisplay,
         #   Lines
-        "ColorLineDisplay": ColorLineDisplay,
+        # "ColorLineDisplay": ColorLineDisplay,
         "ImageLineDisplay": ImageLineDisplay,
-        "ColorDoorDisplay": ColorDoorDisplay,
+        # "ColorDoorDisplay": ColorDoorDisplay,
         "ImageDoorDisplay": ImageDoorDisplay,
         "LineShadowRadiusDisplay": LineShadowRadiusDisplay,
         "LineShadowLengthDisplay": LineShadowLengthDisplay,

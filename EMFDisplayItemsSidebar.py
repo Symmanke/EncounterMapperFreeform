@@ -47,7 +47,7 @@ class DisplayItemList(QFrame):
     def __init__(self, map):
         super(DisplayItemList, self).__init__()
         self.map = map
-        self.map.displayItemsUpdated.connect(self.updateDIList)
+        self.map.displayItemListUpdated.connect(self.updateDIList)
         self.diEditor = None
         self.diDialog = None
         self.listWidget = QListWidget()

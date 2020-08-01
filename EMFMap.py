@@ -28,7 +28,8 @@ class EMFMap(QObject):
 
     selectionUpdated = pyqtSignal()
     layerUpdated = pyqtSignal()
-    displayItemsUpdated = pyqtSignal()
+    displayItemListUpdated = pyqtSignal()
+    displayItemValuesUpdated = pyqtSignal()
     selectedDIUpdated = pyqtSignal()
 
     CLASS_TO_TYPE = {
@@ -110,19 +111,20 @@ class EMFMap(QObject):
     # /////////////////////////////// #
 
     def diUpdated(self):
-        self.displayItemsUpdated.emit()
+        self.displayItemValuesUpdated.emit()
 
     def getDisplayItems(self):
         return self.displayItems
 
     def getSelectedDI(self):
         di = None
-        if self.selectedDI > 0:
+        if self.selectedDI >= 0:
             di = self.displayItems[self.selectedDI]
         return di
 
     def setSelectedDI(self, index):
         self.selectedDI = index
+        self.displayItemListUpdated.emit()
 
     def getSelectedDIIndex(self):
         return self.selectedDI
@@ -141,20 +143,22 @@ class EMFMap(QObject):
             self.displayItems.append(di)
             di.setMap(self)
             self.selectedDI = len(self.displayItems) - 1
+            self.displayItemListUpdated.emit()
 
     def applyDIToSelection(self, di):
         if di.getAllowedClass() == NodeLayer:
             di.addItem(self.nodeLayers[self.currentLayer])
         else:
             di.addItems(self.selectedItems)
-        self.displayItemsUpdated.emit()
+        self.displayItemValuesUpdated.emit()
 
     def removeDisplayItem(self, di):
         if di in self.displayItems:
             di.removeAllItems()
             self.displayItems.remove(di)
             self.selectedDI = -1
-            self.displayItemsUpdated.emit()
+            self.displayItemListUpdated.emit()
+            self.displayItemValuesUpdated.emit()
 
     def shiftDisplayItem(self, index, shiftUp):
         if shiftUp:
@@ -163,20 +167,23 @@ class EMFMap(QObject):
                 self.displayItems[index] = self.displayItems[index-1]
                 self.displayItems[index-1] = shift
                 self.selectedDI = index - 1
-                self.displayItemsUpdated.emit()
+                self.displayItemListUpdated.emit()
+                self.displayItemValuesUpdated.emit()
         else:
             if index > -1 and index != len(self.displayItems)-1:
                 shift = self.displayItems[index]
                 self.displayItems[index] = self.displayItems[index+1]
                 self.displayItems[index+1] = shift
                 self.selectedDI = index + 1
-                self.displayItemsUpdated.emit()
+                self.displayItemListUpdated.emit()
+                self.displayItemValuesUpdated.emit()
 
     def getLayerImages(self):
         layerImgList = []
-        for i in range(self.currentLayer):
+        for i in range(len(self.nodeLayers)):
             img = self.nodeLayers[i].getLayerImage()
             if img is None or i == self.currentLayer:
+                # TODO: or self.nodeLayers[i].NeedsRedraw():
                 img = self.nodeLayers[i].redrawLayerImage(self.displayItems)
             layerImgList.append(img)
         return layerImgList
