@@ -71,6 +71,30 @@ class NodeEditor(QWidget):
         self.setFixedHeight(height)
         self.setMouseTracking(True)
 
+        self.keyBindings = {
+            # Select Modifications
+            Qt.Key_1: (self.changeSelectionType, NodeLayer.TYPE_NODE),
+            Qt.Key_2: (self.changeSelectionType, NodeLayer.TYPE_LINE),
+            Qt.Key_3: (self.changeSelectionType, NodeLayer.TYPE_SHAPE),
+            # Actions
+            Qt.Key_G: (self.beginInteraction, NodeEditor.INTERACT_GRAB),
+            Qt.Key_S: (self.beginInteraction, NodeEditor.INTERACT_SCALE),
+            Qt.Key_R: (self.beginInteraction, NodeEditor.INTERACT_ROTATE),
+            # Select all
+            Qt.Key_A: (self.selectAll,),
+            # Extrude, Duplicate, Delete
+            Qt.Key_D: (self.duplicateItems,),
+            Qt.Key_F: (self.formItem,),
+            Qt.Key_E: (self.extrudeItems,),
+            Qt.Key_X: (self.deleteItems, False),
+            Qt.Key_X | Qt.ShiftModifier: (self.deleteItems, True),
+            # Toggle
+            Qt.Key_T: (self.toggleView,),
+        }
+
+    def toggleView(self):
+        self.showDebug = not self.showDebug
+
     def resizeEditField(self, newWidth, newHeight, xOff=0, yOff=0):
         self.setFixedWidth(newWidth)
         self.setFixedHeight(newHeight)
@@ -475,36 +499,18 @@ class NodeEditor(QWidget):
 
     # Handle the key presses here.
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_1:
-            self.changeSelectionType(NodeLayer.TYPE_NODE)
-        elif event.key() == Qt.Key_2:
-            self.changeSelectionType(NodeLayer.TYPE_LINE)
-        elif event.key() == Qt.Key_3:
-            self.changeSelectionType(NodeLayer.TYPE_SHAPE)
-        elif event.key() == Qt.Key_G:
-            self.beginInteraction(NodeEditor.INTERACT_GRAB)
-        elif event.key() == Qt.Key_S:
-            self.beginInteraction(NodeEditor.INTERACT_SCALE)
-        elif event.key() == Qt.Key_R:
-            self.beginInteraction(NodeEditor.INTERACT_ROTATE)
-        elif (event.key() == Qt.Key_A
-              and self.interactMode == NodeEditor.INTERACT_SELECT):
-            self.selectAll()
-        elif (event.key() == Qt.Key_D):
-            self.duplicateItems()
-        elif (event.key() == Qt.Key_E
-              and self.interactMode == NodeEditor.INTERACT_SELECT):
-            self.extrudeItems()
-        elif event.key() == Qt.Key_F:
-            self.formItem()
-        elif event.key() == Qt.Key_X:
-            # and event.modifiers == Qt.ShiftModifier:
-            self.deleteItems(event.modifiers() == Qt.ShiftModifier)
-        elif event.key() == Qt.Key_T:
-            # toggle what we show
-            self.showDebug = not self.showDebug
+        key = event.key() | int(event.modifiers())
+        if key in self.keyBindings:
+            command = self.keyBindings[key]
+            if len(command) == 1:
+                command[0]()
+            else:
+                command[0](command[1])
 
-        self.repaint()
+            self.repaint()
+        else:
+            # Ignore event so it can percolate up
+            event.ignore()
 
     def paintEvent(self, paintEvent):
         painter = QPainter(self)
