@@ -79,8 +79,8 @@ class EMFMain(QWidget):
             mapImages = self.map.getLayerImages()
             print("retrieved {} map Images".format(len(mapImages)))
             for i in range(len(mapImages)):
-                mapImages[i].save(fp+"_l{}.png".format(i), "PNG")
-                print("SAVED!!!")
+                mapImages[i].save(fp+"_L{}.png".format(i), "PNG")
+                print("Exported Encounter Map!!!")
 
 
 def main():

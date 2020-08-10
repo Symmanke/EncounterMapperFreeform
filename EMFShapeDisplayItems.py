@@ -45,6 +45,9 @@ class ColorShapeDisplay(EMFDisplayItem):
                                      "startValue": 100}),
         }
 
+    def classStr(self):
+        return "ColorShapeDisplay"
+
     def drawSimple(self, painter, item):
         # draw the shape's polygon
         poly = item.poly()
@@ -74,6 +77,9 @@ class ImageShapeDisplay(EMFDisplayItem):
                                      "maximum": 100,
                                      "startValue": 100}),
         }
+
+    def classStr(self):
+        return "ImageShapeDisplay"
 
     def drawSimple(self, painter, item):
         # draw the shape's polygon

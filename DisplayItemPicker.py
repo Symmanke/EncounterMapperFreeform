@@ -24,12 +24,13 @@ from EMFEditAction import EditAction
 
 from EMFNodeDisplayItems import (ColorCircleDisplay, ImageDisplay,
                                  CircleShadowDisplay)
-from EMFLineDisplayItems import (ColorLineDisplay, ImageLineDisplay,
-                                 ColorDoorDisplay, ImageDoorDisplay,
+from EMFLineDisplayItems import (ImageLineDisplay,
+                                 ImageDoorDisplay,
                                  LineShadowRadiusDisplay,
                                  LineShadowLengthDisplay)
 from EMFShapeDisplayItems import ColorShapeDisplay, ImageShapeDisplay
 from EMFSpecialDisplay import ColorBGDisplay, ImageBGDisplay, GridDisplay
+from EMFDisplayProperty import EMFDisplayItem
 
 
 class DisplayItemPicker(EditAction):
@@ -80,3 +81,12 @@ class DisplayItemPicker(EditAction):
     def getSelectedDI(self, map):
         diSelection = DisplayItemPicker.DIClasses[self.diPicker.currentText()]
         return diSelection(self.nameEdit.text())
+
+    @classmethod
+    def DisplayItemFromJSON(cls, jsonObj):
+        di = None
+        if jsonObj["classStr"] in cls.DIClasses:
+            di = cls.DIClasses[jsonObj["classStr"]](
+                jsonObj["name"],
+                jsonObj["sharedAttributes"], jsonObj["individualAttributes"])
+        return di

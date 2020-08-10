@@ -186,6 +186,9 @@ class EMFNode(DIPropertyHolder):
     def nodeDeleted(self):
         self.removeAllDIs()
 
+    def jsonObj(self, DIDict):
+        pass
+
 
 class EMFLine(DIPropertyHolder):
     def __init__(self, n1, n2, shape=None):
@@ -247,7 +250,7 @@ class EMFShape(DIPropertyHolder):
         for node in self.shapeNodes:
             node.addShape(self)
             line = EMFNodeHelper.existingLine(lastNode, node)
-            print(line)
+            # print(line)
             if len(line) == 0:
                 self.shapeLines.append(EMFLine(lastNode, node, self))
             else:
@@ -423,7 +426,7 @@ class EMFNodeHelper:
             for node in list(connections.intersection(nodes)):
                 # find the closest connection
                 i = nodes.index(node)
-                print("index: {}".format(i))
+                # print("index: {}".format(i))
                 if cIndex == -1:
                     cIndex = i
                 elif i > cIndex:

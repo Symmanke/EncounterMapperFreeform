@@ -22,21 +22,24 @@ If not, see <https://www.gnu.org/licenses/>.
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (QWidget, QSlider, QLabel, QHBoxLayout, QCheckBox,
                              QSpinBox, QFileDialog, QPushButton, QDialog)
-from PyQt5.QtGui import QPalette, QColor, QPixmap
+from PyQt5.QtGui import QPalette, QPixmap
 
 from EMFColorPicker import ColorPicker
 
 
 class EMFAttribute:
-    def __init__(self, parentDI, name, widgetClass, widgetParams):
-        self.value = None
+    def __init__(self, parentDI, name, widgetClass, widgetParams,
+                 value, jsonValue):
+        # jsonValue is used when saving items. Each application should have a
+        # json Equivalent to create the value from.
+        self.value = value
+        self.jsonValue = jsonValue
         self.parentDI = parentDI
         self.name = name
-        # self.attributeWidget = None
         self.widgetclass = widgetClass
         self.widgetParams = widgetParams
-        if "startValue" in widgetParams:
-            self.value = widgetParams["startValue"]
+        # if "startValues" in widgetParams:
+        #     self.value = widgetParams["startValues"]
 
     def getName(self):
         return self.name
@@ -44,8 +47,12 @@ class EMFAttribute:
     def getValue(self):
         return self.value
 
-    def setValue(self, value):
+    def getJSONValue(self):
+        return self.jsonValue
+
+    def setValues(self, value, jsonValue):
         self.value = value
+        self.jsonValue = jsonValue
         self.parentDI.valueUpdated(self.name)
 
     def widgetClass(self):
@@ -54,18 +61,24 @@ class EMFAttribute:
     def widgetParams(self):
         return self.widgetParams
 
+    def jsonObj(self):
+        return {
+            "name": self.name,
+            "value": self.jsonValue,
+        }
 
 # Base for the attribute widget.
+
+
 class EMFAttributeWidget(QWidget):
     attributeChanged = pyqtSignal()
 
     def __init__(self, attr, params):
         super(EMFAttributeWidget, self).__init__()
         self.attribute = attr
-        # self.attributes = {} if attributes is None else attributes
 
-    def updateValue(self, value):
-        self.attribute.setValue(value)
+    def updateValues(self, value, jsonValue):
+        self.attribute.setValues(value, jsonValue)
 
 
 class ScrollbarAttributeWidget(EMFAttributeWidget):
@@ -74,10 +87,7 @@ class ScrollbarAttributeWidget(EMFAttributeWidget):
         self.scroll = QSlider(Qt.Horizontal, self)
         self.scroll.setMinimum(params["minimum"])
         self.scroll.setMaximum(params["maximum"])
-
-        val = attr.getValue()
-        val = params["startValue"] if val is None else val
-        self.scroll.setValue(val)
+        self.scroll.setValue(attr.getValue())
 
         self.scroll.sliderMoved.connect(self.updateSliderVal)
         self.valueLabel = QLabel("{}".format(self.scroll.value()))
@@ -89,7 +99,7 @@ class ScrollbarAttributeWidget(EMFAttributeWidget):
 
     def updateSliderVal(self, value):
         self.valueLabel.setText("{}".format(value))
-        self.updateValue(value)
+        self.updateValues(value, value)
 
 
 class SpinboxAttributeWidget(EMFAttributeWidget):
@@ -99,10 +109,8 @@ class SpinboxAttributeWidget(EMFAttributeWidget):
         self.spin.setMinimum(params["minimum"])
         self.spin.setMaximum(params["maximum"])
 
-        val = attr.getValue()
-        val = params["startValue"] if val is None else val
-        self.spin.setValue(val)
-        self.spin.valueChanged.connect(self.updateValue)
+        self.spin.setValue(attr.getValue())
+        self.spin.valueChanged.connect(lambda v: self.updateValues(v, v))
         layout = QHBoxLayout()
         layout.addWidget(self.spin)
         self.setLayout(layout)
@@ -112,11 +120,11 @@ class CheckBoxAttributeWidget(EMFAttributeWidget):
     def __init__(self, attr, params):
         super(CheckBoxAttributeWidget, self).__init__(attr, params)
         self.check = QCheckBox("")
-        val = attr.getValue()
-        val = params["startValue"] if val is None else val
-        self.check.setChecked(val)
+
+        self.check.setChecked(attr.getValue())
         self.check.toggled.connect(
-            lambda: self.updateValue(self.check.isChecked()))
+            lambda: self.updateValues(
+                self.check.isChecked(), self.check.isChecked()))
         layout = QHBoxLayout()
         layout.addWidget(self.check)
         self.setLayout(layout)
@@ -125,8 +133,8 @@ class CheckBoxAttributeWidget(EMFAttributeWidget):
 class FilePickerAttributeWidget(EMFAttributeWidget):
     def __init__(self, attr, params):
         super(FilePickerAttributeWidget, self).__init__(attr, params)
-        val = attr.getValue()
-        pathName = val["path"]
+        # val = attr.getValue()
+        pathName = attr.getJSONValue()
         if "/" in pathName:
             pathName = pathName.split("/")[-1]
 
@@ -148,7 +156,7 @@ class FilePickerAttributeWidget(EMFAttributeWidget):
                 pathName = pathName.split("/")[-1]
             self.fileLabel.setText(pathName)
             img = QPixmap(pathToOpen[0])
-            self.updateValue({"path": pathToOpen[0], "image": img})
+            self.updateValues(img, pathToOpen[0])
 
 
 class ColorAttributeWidget(EMFAttributeWidget):
@@ -160,13 +168,7 @@ class ColorAttributeWidget(EMFAttributeWidget):
         self.preview = QWidget()
         self.preview.setMinimumWidth(100)
         self.preview.setAutoFillBackground(True)
-        self.selectedColor = None
-
-        val = attr.getValue()
-        if not isinstance(val, QColor):
-            rgb = params["startValue"]
-            val = QColor(rgb[0], rgb[1], rgb[2])
-        self.selectedColor = val
+        self.selectedColor = attr.getValue()
 
         self.setPreview(self.selectedColor)
         self.cpBtn = QPushButton("Choose")
@@ -202,7 +204,10 @@ class ColorAttributeWidget(EMFAttributeWidget):
         self.colorEditor = None
 
         self.setPreview(self.selectedColor)
-        self.updateValue(self.selectedColor)
+        self.updateValues(
+            self.selectedColor,
+            (self.selectedColor.red(), self.selectedColor.green(),
+             self.selectedColor.blue()))
 
     def cancelColorEdit(self):
         self.colorDialog.close()

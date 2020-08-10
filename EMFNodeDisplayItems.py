@@ -29,25 +29,41 @@ from PyQt5.QtGui import (QPen, QBrush, QColor, QPixmap, QTransform,
 
 
 class ColorCircleDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ColorCircleDisplay, self).__init__(name, EMFNode)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0)),
+                      "LineColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            slc = shared["LineColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+            shared["LineColor"] = (QColor(slc[0], slc[1], slc[2]), slc)
+        if indiv is None:
+            indiv = {"Size": 24,
+                     "Opacity": 100}
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
-            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
+            "LineColor": EMFAttribute(
+                self, "LineColor", ColorAttributeWidget, {},
+                shared["LineColor"][0], shared["LineColor"][1]),
         }
         self.individualAttributes = {
-            "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
-                                 {"minimum": 0,
-                                  "maximum": 1024,
-                                  "startValue": 24}),
+            "Size": EMFAttribute(
+                self, "Size", SpinboxAttributeWidget,
+                {"minimum": 0, "maximum": 1024, },
+                indiv["Size"], indiv["Size"]),
 
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
         }
+
+    def classStr(self):
+        return "ColorCircleDisplay"
 
     def drawSimple(self, painter, item):
         # draw a circle node with the given size
@@ -65,32 +81,38 @@ class ColorCircleDisplay(EMFDisplayItem):
 
 
 class ImageDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ImageDisplay, self).__init__(name, EMFNode)
+        if shared is None:
+            shared = {"Image": (None, "Choose a file...")}
+        if indiv is None:
+            indiv = {"SizeRatio": 100,
+                     "Rotation": 0,
+                     "Opacity": 100}
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
-                                  {"startValue": {
-                                      "path": "Choose a file...",
-                                      "image": None}})
+            "Image": EMFAttribute(
+                self, "Image", FilePickerAttributeWidget, {},
+                shared["Image"][0], shared["Image"][1])
 
         }
 
         self.individualAttributes = {
-            "SizeRatio": EMFAttribute(self, "SizeRatio",
-                                      ScrollbarAttributeWidget,
-                                      {"minimum": 0,
-                                       "maximum": 1000,
-                                       "startValue": 100}),
-            "Rotation": EMFAttribute(self, "Rotation",
-                                     ScrollbarAttributeWidget,
-                                     {"minimum": -180,
-                                      "maximum": 180,
-                                      "startValue": 0}),
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "SizeRatio": EMFAttribute(
+                self, "SizeRatio", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 1000},
+                indiv["SizeRatio"], indiv["SizeRatio"]),
+            "Rotation": EMFAttribute(
+                self, "Rotation", ScrollbarAttributeWidget,
+                {"minimum": -180, "maximum": 180},
+                indiv["Rotation"], indiv["Rotation"]),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
         }
+
+    def classStr(self):
+        return "ImageDisplay"
 
     def drawSimple(self, painter, item):
         # draw the shape's polygon
@@ -119,29 +141,42 @@ class ImageDisplay(EMFDisplayItem):
 
 
 class CircleShadowDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(CircleShadowDisplay, self).__init__(name, EMFNode)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+        if indiv is None:
+            indiv = {"Size": 24,
+                     "StartOpacity": 125,
+                     "EndOpacity": 0}
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
         }
         self.individualAttributes = {
-            "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
-                                 {"minimum": 0,
-                                  "maximum": 1024,
-                                  "startValue": 24}),
+            "Size": EMFAttribute(
+                self, "Size", SpinboxAttributeWidget,
+                {"minimum": 0, "maximum": 1024},
+                indiv["Size"], indiv["Size"]),
 
-            "StartOpacity": EMFAttribute(self, "StartOpacity",
-                                         ScrollbarAttributeWidget,
-                                         {"minimum": 0,
-                                          "maximum": 255,
-                                          "startValue": 125}),
-            "EndOpacity": EMFAttribute(self, "EndOpacity",
-                                       ScrollbarAttributeWidget,
-                                       {"minimum": 0,
-                                        "maximum": 255,
-                                        "startValue": 0}),
+            "StartOpacity": EMFAttribute(
+                self, "StartOpacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 255},
+                indiv["StartOpacity"], indiv["StartOpacity"]),
+            "EndOpacity": EMFAttribute(
+                self, "EndOpacity",
+                ScrollbarAttributeWidget,
+                {"minimum": 0,
+                 "maximum": 255},
+                indiv["EndOpacity"], indiv["EndOpacity"]),
         }
+
+    def classStr(self):
+        return "CircleShadowDisplay"
 
     def drawSimple(self, painter, item):
         # draw a circle node with the given gradient size

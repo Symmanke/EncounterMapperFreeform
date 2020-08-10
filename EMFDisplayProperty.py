@@ -142,3 +142,18 @@ class EMFDisplayItem:
     # draw the complete representation, which may take time to process
     def drawComplex(self, painter, item):
         self.drawSimple(self, painter, item)
+
+    def jsonObj(self):
+        shared = {}
+        for s in self.sharedAttributes:
+            shared[s.getName()] = s.jsonObj()
+        indiv = {}
+        for i in self.individualAttributes:
+            shared[i.getName()] = i.jsonObj()
+        return {
+            "name": self.name,
+            "sharedAttributes": shared,
+            "individualAttributes": indiv,
+            "class": self.classStr()
+
+        }

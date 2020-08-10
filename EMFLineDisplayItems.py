@@ -19,7 +19,7 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import (QPen, QBrush, QColor, QPixmap, QTransform, QPainter,
+from PyQt5.QtGui import (QBrush, QColor, QPixmap, QTransform, QPainter,
                          QRadialGradient, QLinearGradient, QGradient)
 
 
@@ -52,9 +52,12 @@ class ColorLineDisplay(EMFDisplayItem):
                                      "startValue": 100}),
         }
 
+    def classStr(self):
+        return "ColorLineDisplay"
+
 
 class ImageLineDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ImageLineDisplay, self).__init__(name, EMFLine)
         self.sharedAttributes = {
             "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
@@ -81,6 +84,9 @@ class ImageLineDisplay(EMFDisplayItem):
                                          CheckBoxAttributeWidget,
                                          {"startValue": False}),
         }
+
+    def classStr(self):
+        return "ImageLineDisplay"
 
     def drawSimple(self, painter, item):
         # draw the shape's polygon
@@ -162,6 +168,9 @@ class ColorDoorDisplay(EMFDisplayItem):
                                       "startValue": 50}),
         }
 
+    def classStr(self):
+        return "ColorDoorDisplay"
+
 
 class ImageDoorDisplay(EMFDisplayItem):
     def __init__(self, name):
@@ -194,6 +203,9 @@ class ImageDoorDisplay(EMFDisplayItem):
                                      "maximum": 360,
                                      "startValue": 0}),
         }
+
+    def classStr(self):
+        return "ImageDoorDisplay"
 
     def drawSimple(self, painter, item):
         points = item.nodes()
@@ -256,6 +268,9 @@ class LineShadowRadiusDisplay(EMFDisplayItem):
                                         CheckBoxAttributeWidget,
                                         {"startValue": True})
         }
+
+    def classStr(self):
+        return "LineShadowRadiusDisplay"
 
     def drawSimple(self, painter, item):
         points = item.nodes()
@@ -360,6 +375,9 @@ class LineShadowLengthDisplay(EMFDisplayItem):
                                         {"startValue": True})
         }
 
+    def classStr(self):
+        return "LineShadowLengthDisplay"
+
     def drawSimple(self, painter, item):
         points = item.nodes()
         comparison = EMFNodeHelper.nodeComparison(points[0], points[1], True)
@@ -374,7 +392,6 @@ class LineShadowLengthDisplay(EMFDisplayItem):
                        fillColor.blue(), sOpacity)
         eFill = QColor(fillColor.red(), fillColor.green(),
                        fillColor.blue(), eOpacity)
-        # Create the gradient
 
         # Set linear Gradient
         pm = None

@@ -38,7 +38,7 @@ class DIPropertyHolder(QObject):
             for attrStr in diAttr:
                 attrValues[attrStr] = diAttr[attrStr].getValue()
             self.diProperties[di] = attrValues
-            print("ADDING PROPERTY: {}".format(self.diProperties))
+            # print("ADDING PROPERTY: {}".format(self.diProperties))
 
     def updateAttribute(self, di, attr):
         if di in self.diProperties:

@@ -41,6 +41,9 @@ class GridDisplay(EMFDisplayItem):
         }
         self.individualAttributes = {}
 
+    def classStr(self):
+        return "GridDisplay"
+
     def drawSimple(self, painter, item):
         dimensions = item.getDimensions()
         pattern = (5, 3, 3)
@@ -78,6 +81,9 @@ class ColorBGDisplay(EMFDisplayItem):
                                      "startValue": 100}),
         }
 
+    def classStr(self):
+        return "ColorBGDisplay"
+
     def drawSimple(self, painter, item):
         # draw the shape's polygon
         dimensions = item.getDimensions()
@@ -106,6 +112,9 @@ class ImageBGDisplay(EMFDisplayItem):
                                      "maximum": 100,
                                      "startValue": 100}),
         }
+
+    def classStr(self):
+        return "ImageBGDisplay"
 
     def drawSimple(self, painter, item):
         # draw the shape's polygon
