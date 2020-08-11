@@ -89,6 +89,30 @@ class NodeLayer(DIPropertyHolder):
         self.needsRedraw = False
         return self.layerImage
 
+    def jsonObj(self, diIndexes):
+        nodeJSON = []
+        nodeIDS = {}
+        i = 0
+        for node in self.layerItems[NodeLayer.TYPE_NODE]:
+            nodeIDS[node] = i
+            i += 1
+            nodeJSON.append(node.jsonObj(diIndexes))
+
+        def lineShapeJSON(list, nodes, diIndexes):
+            items = []
+            for item in list:
+                items.append(item.jsonObj(nodes, diIndexes))
+            return items
+        lineJSON = lineShapeJSON(
+            self.layerItems[NodeLayer.TYPE_LINE], nodeIDS, diIndexes)
+        shapeJSON = lineShapeJSON(
+            self.layerItems[NodeLayer.TYPE_SHAPE], nodeIDS, diIndexes)
+        return {
+            "Nodes": nodeJSON,
+            "Lines": lineJSON,
+            "Shapes": shapeJSON
+        }
+
 
 class EMFNode(DIPropertyHolder):
     def __init__(self, x, y):
@@ -186,8 +210,13 @@ class EMFNode(DIPropertyHolder):
     def nodeDeleted(self):
         self.removeAllDIs()
 
-    def jsonObj(self, DIDict):
-        pass
+    def jsonObj(self, diIndexes):
+        indiv = self.indivAttributesJSON(diIndexes)
+        return {
+            "X": self.nPoint.x(),
+            "Y": self.nPoint.y(),
+            "DIProperties": indiv
+        }
 
 
 class EMFLine(DIPropertyHolder):
@@ -232,6 +261,16 @@ class EMFLine(DIPropertyHolder):
         for node in self.lineNodes:
             node.removeLineRef(self)
         self.removeAllDIs()
+
+    def jsonObj(self, nodeIndexes, diIndexes):
+        indiv = self.indivAttributesJSON(diIndexes)
+        ni = []
+        for node in self.lineNodes:
+            ni.append(nodeIndexes[node])
+        return {
+            "nodes": ni,
+            "DIProperties": indiv
+        }
 
 
 class EMFShape(DIPropertyHolder):
@@ -296,6 +335,16 @@ class EMFShape(DIPropertyHolder):
             node.removeShapeRef(self)
         self.nodePoly = False
         self.removeAllDIs()
+
+    def jsonObj(self, nodeIndexes, diIndexes):
+        indiv = self.indivAttributesJSON(diIndexes)
+        ni = []
+        for node in self.shapeNodes:
+            ni.append(nodeIndexes[node])
+        return {
+            "nodes": ni,
+            "DIProperties": indiv
+        }
 
 
 class EMFNodeHelper:

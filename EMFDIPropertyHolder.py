@@ -33,16 +33,17 @@ class DIPropertyHolder(QObject):
     def addIndividualAttributes(self, di):
         # wat
         if di not in self.diProperties:
-            attrValues = {}
+            attrValues = {"Value": {}, "JSON": {}}
             diAttr = di.getIndividualAttributes()
             for attrStr in diAttr:
-                attrValues[attrStr] = diAttr[attrStr].getValue()
+                attrValues["Value"][attrStr] = diAttr[attrStr].getValue()
+                attrValues["JSON"][attrStr] = diAttr[attrStr].getJSONValue()
             self.diProperties[di] = attrValues
-            # print("ADDING PROPERTY: {}".format(self.diProperties))
 
     def updateAttribute(self, di, attr):
         if di in self.diProperties:
-            self.diProperties[di][attr.getName()] = attr.getValue()
+            self.diProperties[di]["Value"][attr.getName()] = attr.getValue()
+            self.diProperties[di]["JSON"][attr.getName()] = attr.getJSONValue()
 
     def removeAllDIs(self):
         for di in self.diProperties:
@@ -57,5 +58,16 @@ class DIPropertyHolder(QObject):
     def diValues(self, di):
         values = None
         if di in self.diProperties:
-            values = self.diProperties[di]
+            values = self.diProperties[di]["Value"]
         return values
+
+    def indivAttributesJSON(self, diIndexes):
+        properties = {}
+        for di in self.diProperties:
+            propertyJS = {}
+            # Fill in PropertyJS
+            for attr in self.diProperties[di]["JSON"]:
+                # print(attr)
+                propertyJS[attr] = self.diProperties[di]["JSON"][attr]
+            properties[diIndexes[di]] = propertyJS
+        return properties

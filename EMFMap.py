@@ -204,12 +204,18 @@ class EMFMap(QObject):
         return layerImgList
 
     def jsonObj(self):
-        layers = []
-        # for l in self.nodeLayers:
-        #     layers.append(l.jsonObj())
+
         dis = []
         for di in self.displayItems:
             dis.append(di.jsonObj())
+
+        layers = []
+        # Indexes of all DIs to assist w/ cachind IDs
+        diIndexes = {}
+        for i in range(len(dis)):
+            diIndexes[self.displayItems[i]] = i
+        for l in self.nodeLayers:
+            layers.append(l.jsonObj(diIndexes))
         return {
             "Width": self.width,
             "Height": self.height,
