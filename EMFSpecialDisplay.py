@@ -45,7 +45,7 @@ class GridDisplay(EMFDisplayItem):
             "Opacity": EMFAttribute(
                 self, "Opacity", ScrollbarAttributeWidget,
                 {"minimum": 0, "maximum": 100},
-                indiv["Opacity"], indiv["Opacity"]),
+                shared["Opacity"], shared["Opacity"]),
         }
         self.individualAttributes = {}
 

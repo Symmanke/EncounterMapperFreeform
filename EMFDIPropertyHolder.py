@@ -30,20 +30,20 @@ class DIPropertyHolder(QObject):
     def currentDIs(self):
         return list(self.diProperties.keys())
 
-    def addIndividualAttributes(self, di):
+    def addIndividualAttributes(self, di, values=None):
         # wat
         if di not in self.diProperties:
-            attrValues = {"Value": {}, "JSON": {}}
-            diAttr = di.getIndividualAttributes()
-            for attrStr in diAttr:
-                attrValues["Value"][attrStr] = diAttr[attrStr].getValue()
-                attrValues["JSON"][attrStr] = diAttr[attrStr].getJSONValue()
+            attrValues = values
+            if attrValues is None:
+                attrValues = {}
+                diAttr = di.getIndividualAttributes()
+                for attrStr in diAttr:
+                    attrValues[attrStr] = diAttr[attrStr].getValue()
             self.diProperties[di] = attrValues
 
     def updateAttribute(self, di, attr):
         if di in self.diProperties:
-            self.diProperties[di]["Value"][attr.getName()] = attr.getValue()
-            self.diProperties[di]["JSON"][attr.getName()] = attr.getJSONValue()
+            self.diProperties[di][attr.getName()] = attr.getValue()
 
     def removeAllDIs(self):
         for di in self.diProperties:
@@ -58,7 +58,7 @@ class DIPropertyHolder(QObject):
     def diValues(self, di):
         values = None
         if di in self.diProperties:
-            values = self.diProperties[di]["Value"]
+            values = self.diProperties[di]
         return values
 
     def indivAttributesJSON(self, diIndexes):
@@ -66,8 +66,8 @@ class DIPropertyHolder(QObject):
         for di in self.diProperties:
             propertyJS = {}
             # Fill in PropertyJS
-            for attr in self.diProperties[di]["JSON"]:
+            for attr in self.diProperties[di]:
                 # print(attr)
-                propertyJS[attr] = self.diProperties[di]["JSON"][attr]
+                propertyJS[attr] = self.diProperties[di][attr]
             properties[diIndexes[di]] = propertyJS
         return properties

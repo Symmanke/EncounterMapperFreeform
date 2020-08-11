@@ -81,15 +81,15 @@ class EMFDisplayItem:
     def setMap(self, map):
         self.parentMap = map
 
-    def addItems(self, items):
+    def addItems(self, items, values=None):
         for item in items:
             self.addItem(item)
 
-    def addItem(self, item):
+    def addItem(self, item, values=None):
         if (isinstance(item, self.allowedClassItems) and
                 item not in self.propertyItems):
             self.propertyItems.append(item)
-            item.addIndividualAttributes(self)
+            item.addIndividualAttributes(self, values)
 
     def removeAllItems(self):
         for item in self.propertyItems:

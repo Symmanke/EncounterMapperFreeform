@@ -30,7 +30,6 @@ from EMFLineDisplayItems import (ImageLineDisplay,
                                  LineShadowLengthDisplay)
 from EMFShapeDisplayItems import ColorShapeDisplay, ImageShapeDisplay
 from EMFSpecialDisplay import ColorBGDisplay, ImageBGDisplay, GridDisplay
-from EMFDisplayProperty import EMFDisplayItem
 
 
 class DisplayItemPicker(EditAction):

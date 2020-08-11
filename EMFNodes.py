@@ -33,18 +33,40 @@ class NodeLayer(DIPropertyHolder):
     TYPE_LINE = "LINE"
     TYPE_SHAPE = "SHAPE"
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, nodes=None, lines=None, shapes=None):
         super(NodeLayer, self).__init__()
+        nodes = [] if nodes is None else nodes
+        lines = [] if lines is None else lines
+        shapes = [] if shapes is None else shapes
         self.layerItems = {
-            NodeLayer.TYPE_NODE: [],
-            NodeLayer.TYPE_LINE: [],
-            NodeLayer.TYPE_SHAPE: []
+            NodeLayer.TYPE_NODE: nodes,
+            NodeLayer.TYPE_LINE: lines,
+            NodeLayer.TYPE_SHAPE: shapes
         }
 
         self.layerWidth = width
         self.layerHeight = height
         self.layerImage = None
         self.needsRedraw = True
+
+    @classmethod
+    def createFromJSON(cls, jsContents, displayItems, width, height):
+        nodes = []
+        lines = []
+        shapes = []
+        for nodeJS in jsContents["Nodes"]:
+            nodes.append(EMFNode.createFromJSON(nodeJS, displayItems))
+        for lineJS in jsContents["Lines"]:
+            lines.append(EMFLine.createFromJSON(
+                lineJS, nodes, displayItems))
+        for shapeJS in jsContents["Shapes"]:
+            shapes.append(EMFShape.createFromJSON(
+                shapeJS, nodes, displayItems))
+        layer = cls(width, height, nodes, lines, shapes)
+        for dIndex in jsContents["DIProperties"]:
+            displayItems[int(dIndex)].addItem(
+                layer, jsContents["DIProperties"][dIndex])
+        return layer
 
     def addItemToLayer(self, type, item):
         typeList = self.layerItems[type]
@@ -90,6 +112,7 @@ class NodeLayer(DIPropertyHolder):
         return self.layerImage
 
     def jsonObj(self, diIndexes):
+        indiv = self.indivAttributesJSON(diIndexes)
         nodeJSON = []
         nodeIDS = {}
         i = 0
@@ -110,7 +133,8 @@ class NodeLayer(DIPropertyHolder):
         return {
             "Nodes": nodeJSON,
             "Lines": lineJSON,
-            "Shapes": shapeJSON
+            "Shapes": shapeJSON,
+            "DIProperties": indiv
         }
 
 
@@ -126,6 +150,13 @@ class EMFNode(DIPropertyHolder):
 
         self.transforming = False
         self.offsetNode = None
+
+    @classmethod
+    def createFromJSON(cls, jsContents, dis):
+        node = cls(jsContents["X"], jsContents["Y"])
+        for dIndex in jsContents["DIProperties"]:
+            dis[int(dIndex)].addItem(node, jsContents["DIProperties"][dIndex])
+        return node
 
     @classmethod
     def createFromNode(cls, node):
@@ -228,6 +259,14 @@ class EMFLine(DIPropertyHolder):
         n2.addLine(self)
         self.lineShapes = [] if shape is None else [shape]
 
+    @classmethod
+    def createFromJSON(cls, jsContents, nodeList, dis):
+        nodes = jsContents["nodes"]
+        line = cls(nodeList[nodes[0]], nodeList[nodes[1]])
+        for dIndex in jsContents["DIProperties"]:
+            dis[int(dIndex)].addItem(line, jsContents["DIProperties"][dIndex])
+        return line
+
     def addShape(self, shape):
         if shape is not None and shape not in self.lineShapes:
             self.lineShapes.append(shape)
@@ -300,6 +339,16 @@ class EMFShape(DIPropertyHolder):
         for node in self.shapeNodes:
             nps.append(node.point())
         self.nodePoly = QPolygon(nps)
+
+    @classmethod
+    def createFromJSON(cls, jsContents, nodeList, dis):
+        nodes = []
+        for nodeIndex in jsContents["nodes"]:
+            nodes.append(nodeList[nodeIndex])
+        shape = cls(nodes, False)
+        for dIndex in jsContents["DIProperties"]:
+            dis[int(dIndex)].addItem(shape, jsContents["DIProperties"][dIndex])
+        return shape
 
     @classmethod
     def createFromLines(cls, lines):

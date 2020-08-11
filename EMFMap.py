@@ -53,6 +53,8 @@ class EMFMap(QObject):
 
         # DIs
         self.displayItems = [] if displayItems is None else displayItems
+        for di in self.displayItems:
+            di.setMap(self)
         self.selectedDI = selectedDI
 
     @classmethod
@@ -61,9 +63,14 @@ class EMFMap(QObject):
         # Do things to populate those items
         for dijs in jsContents["DisplayItems"]:
             displayItems.append(DisplayItemPicker.diFromJSON(dijs))
+        layers = []
+        for layerContent in jsContents["Layers"]:
+            layers.append(NodeLayer.createFromJSON(
+                layerContent, displayItems,
+                jsContents["Width"], jsContents["Height"]))
 
         return cls(jsContents["Width"], jsContents["Height"],
-                   None, displayItems, jsContents["CurrentLayer"],
+                   layers, displayItems, jsContents["CurrentLayer"],
                    jsContents["SelectedDI"])
 
     # ////////////////////////////// #
