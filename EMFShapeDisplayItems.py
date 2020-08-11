@@ -54,7 +54,7 @@ class ColorShapeDisplay(EMFDisplayItem):
             "Opacity": EMFAttribute(
                 self, "Opacity", ScrollbarAttributeWidget,
                 {"minimum": 0, "maximum": 100},
-                shared["Opacity"], shared["Opacity"]),
+                indiv["Opacity"], indiv["Opacity"]),
         }
 
     def classStr(self):

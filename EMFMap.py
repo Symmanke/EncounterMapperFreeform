@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 from PyQt5.QtCore import pyqtSignal, QObject
 
-
+from DisplayItemPicker import DisplayItemPicker
 from EMFNodes import NodeLayer, EMFNode, EMFLine, EMFShape
 
 
@@ -39,17 +39,32 @@ class EMFMap(QObject):
         EMFShape: NodeLayer.TYPE_SHAPE
     }
 
-    def __init__(self, width=600, height=400):
+    def __init__(self, width=600, height=400, layers=None, displayItems=None,
+                 currentLayer=0, selectedDI=-1):
         super(EMFMap, self).__init__()
         # Node Layers, Nodes, Lines
-        self.nodeLayers = [NodeLayer(width, height)]
-        self.currentLayer = 0
+        self.width = width
+        self.height = height
+        self.nodeLayers = ([NodeLayer(width, height)] if layers is None
+                           else layers)
+        self.currentLayer = currentLayer
 
         self.selectedItems = []
 
         # DIs
-        self.displayItems = []
-        self.selectedDI = -1
+        self.displayItems = [] if displayItems is None else displayItems
+        self.selectedDI = selectedDI
+
+    @classmethod
+    def createMapFromJSON(cls, jsContents):
+        displayItems = []
+        # Do things to populate those items
+        for dijs in jsContents["DisplayItems"]:
+            displayItems.append(DisplayItemPicker.diFromJSON(dijs))
+
+        return cls(jsContents["Width"], jsContents["Height"],
+                   None, displayItems, jsContents["CurrentLayer"],
+                   jsContents["SelectedDI"])
 
     # ////////////////////////////// #
     # Node and Layer Element Methods #
@@ -187,3 +202,19 @@ class EMFMap(QObject):
                 img = self.nodeLayers[i].redrawLayerImage(self.displayItems)
             layerImgList.append(img)
         return layerImgList
+
+    def jsonObj(self):
+        layers = []
+        # for l in self.nodeLayers:
+        #     layers.append(l.jsonObj())
+        dis = []
+        for di in self.displayItems:
+            dis.append(di.jsonObj())
+        return {
+            "Width": self.width,
+            "Height": self.height,
+            "Layers": layers,
+            "CurrentLayer": self.currentLayer,
+            "DisplayItems": dis,
+            "SelectedDI": self.selectedDI
+        }

@@ -59,11 +59,11 @@ class EMFAttribute:
     def widgetParams(self):
         return self.widgetParams
 
-    def jsonObj(self):
-        return {
-            "name": self.name,
-            "value": self.jsonValue,
-        }
+    # def jsonObj(self):
+    #     return {
+    #         "name": self.name,
+    #         "value": self.jsonValue,
+    #     }
 
 # Base for the attribute widget.
 

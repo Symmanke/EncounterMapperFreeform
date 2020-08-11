@@ -92,6 +92,13 @@ class NodeEditor(QWidget):
             Qt.Key_T: (self.toggleView,),
         }
 
+    def setMap(self, map):
+        self.map = map
+        self.map.selectionUpdated.connect(self.mapSelectionUpdated)
+        self.map.displayItemValuesUpdated.connect(self.repaint)
+        self.mapSelectionUpdated()
+        self.repaint()
+
     def toggleView(self):
         self.showDebug = not self.showDebug
 

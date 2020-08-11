@@ -13,6 +13,12 @@ class DisplayAttributeList(QListWidget):
 
         self.updateDisplayedDIWS()
 
+    def setMap(self, map):
+        self.map = map
+        self.map.selectionUpdated.connect(self.updateDisplayedDIWS)
+        self.map.displayItemListUpdated.connect(self.updateDisplayedDIWS)
+        self.updateDisplayedDIWS()
+
     def updateDisplayedDIWS(self):
         self.clear()
 

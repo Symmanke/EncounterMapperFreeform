@@ -23,11 +23,13 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QWidget,
                              QSplitter, QFileDialog,
                              QVBoxLayout, QScrollArea)
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QPainter, QPixmap
 
 from EMFDisplayItemsSidebar import DisplayItemSidebar
 from EMFNodeEditor import NodeEditor
 from EMFMap import EMFMap
+
+import json
 
 
 class EMFMain(QWidget):
@@ -50,11 +52,13 @@ class EMFMain(QWidget):
 
         self.keyBindings = {
             Qt.Key_E | Qt.ControlModifier: (self.exportEncounterMap,),
-            # Qt.Key_S | Qt.ControlModifier: (self.saveEncounter,),
+            Qt.Key_E | Qt.ControlModifier | Qt.ShiftModifier:
+                (self.exportEncounterMap, False),
+            Qt.Key_S | Qt.ControlModifier: (self.saveEncounter,),
             # Qt.Key_S | Qt.ControlModifier | Qt.ShiftModifier:
             # (self.saveAsEncounter,),
             # Qt.Key_N | Qt.ControlModifier: (self.newEncounterOpenDialog,),
-            # Qt.Key_O | Qt.ControlModifier: (self.openEncounter,),
+            Qt.Key_O | Qt.ControlModifier: (self.openEncounter,),
         }
 
     def keyPressEvent(self, event):
@@ -66,9 +70,7 @@ class EMFMain(QWidget):
             else:
                 command[0](command[1])
 
-    def exportEncounterMap(self):  # , mods=None):
-        modifiers = []
-        print(modifiers)
+    def exportEncounterMap(self, singleLayer=True):
         filePath = QFileDialog.getSaveFileName(self, "Open Encounter",
                                                "", "Image (*.png)")
         print("exporting map at: {}".format(filePath))
@@ -78,9 +80,55 @@ class EMFMain(QWidget):
                 fp = fp[:-4]
             mapImages = self.map.getLayerImages()
             print("retrieved {} map Images".format(len(mapImages)))
-            for i in range(len(mapImages)):
-                mapImages[i].save(fp+"_L{}.png".format(i), "PNG")
-                print("Exported Encounter Map!!!")
+            if singleLayer:
+                img = QPixmap(mapImages[0].width(), mapImages[0].height())
+                painter = QPainter(img)
+                for i in range(len(mapImages)):
+                    painter.drawImage(0, 0, mapImages[i])
+                painter.end()
+                img.save(fp+".png", "PNG")
+            else:
+                for i in range(len(mapImages)):
+                    mapImages[i].save(fp+"_L{}.png".format(i), "PNG")
+                    print("Exported Encounter Map!!!")
+
+    def saveEncounter(self):
+        filePath = QFileDialog.getSaveFileName(
+            self, "Open Encounter", "", "Encounter Mapper Freeform (*.emf)")
+        if filePath is not None:
+            path = filePath[0]
+            if path.endswith(".emf"):
+                path = path[:-4]
+            text = json.dumps(self.map.jsonObj())
+            f = open(path+".emf", "w+")
+            f.write(text)
+            f.close()
+
+    def openEncounter(self):
+        contentMap = None
+        pathToOpen = QFileDialog.getOpenFileName(
+            self, 'Open File', '', "Encounter Mapper Freeform (*.emf)")
+        if pathToOpen is not None and pathToOpen[0]:
+            f = open(pathToOpen[0], "r")
+            if f.mode == "r":
+                contents = f.read()
+                jsContents = None
+                try:
+                    jsContents = json.loads(contents)
+                except Exception:
+                    # using the base exception class for now
+                    # Send an alert that the JSON contents cannot be read
+                    pass
+                f.close()
+                if jsContents is not None:
+                    contentMap = EMFMap.createMapFromJSON(jsContents)
+        if contentMap is not None:
+            self.setMap(contentMap)
+
+    def setMap(self, map):
+        self.map = map
+        self.editor.setMap(map)
+        self.sideBar.setMap(map)
 
 
 def main():

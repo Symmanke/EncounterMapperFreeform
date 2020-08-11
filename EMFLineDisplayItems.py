@@ -403,7 +403,7 @@ class LineShadowLengthDisplay(EMFDisplayItem):
             sfc = shared["FillColor"]
             shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
         if indiv is None:
-            indiv = {"Size": 24,
+            indiv = {"Width": 24,
                      "StartOpacity": 125,
                      "EndOpacity": 0,
                      "ShowEndCaps": True}

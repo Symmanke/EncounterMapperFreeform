@@ -145,11 +145,11 @@ class EMFDisplayItem:
 
     def jsonObj(self):
         shared = {}
-        for s in self.sharedAttributes:
-            shared[s.getName()] = s.jsonObj()
+        for sKey in self.sharedAttributes:
+            shared[sKey] = self.sharedAttributes[sKey].getJSONValue()
         indiv = {}
-        for i in self.individualAttributes:
-            shared[i.getName()] = i.jsonObj()
+        for iKey in self.individualAttributes:
+            indiv[iKey] = self.individualAttributes[iKey].getJSONValue()
         return {
             "name": self.name,
             "sharedAttributes": shared,

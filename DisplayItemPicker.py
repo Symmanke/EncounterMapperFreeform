@@ -83,10 +83,10 @@ class DisplayItemPicker(EditAction):
         return diSelection(self.nameEdit.text())
 
     @classmethod
-    def DisplayItemFromJSON(cls, jsonObj):
+    def diFromJSON(cls, jsonObj):
         di = None
-        if jsonObj["classStr"] in cls.DIClasses:
-            di = cls.DIClasses[jsonObj["classStr"]](
+        if jsonObj["class"] in cls.DIClasses:
+            di = cls.DIClasses[jsonObj["class"]](
                 jsonObj["name"],
                 jsonObj["sharedAttributes"], jsonObj["individualAttributes"])
         return di

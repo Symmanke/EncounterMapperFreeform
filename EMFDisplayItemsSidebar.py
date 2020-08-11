@@ -41,6 +41,10 @@ class DisplayItemSidebar(QFrame):
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
+    def setMap(self, map):
+        self.diList.setMap(map)
+        self.diAttributes.setMap(map)
+
 
 class DisplayItemList(QFrame):
 
@@ -80,6 +84,11 @@ class DisplayItemList(QFrame):
 
         self.setLayout(layout)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+
+    def setMap(self, map):
+        self.map = map
+        self.map.displayItemListUpdated.connect(self.updateDIList)
+        self.updateDIList()
 
     def updateDIList(self):
         self.listWidget.clear()
