@@ -29,15 +29,23 @@ from EMFNodes import NodeLayer
 
 
 class GridDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(GridDisplay, self).__init__(name, NodeLayer)
+        if shared is None:
+            shared = {"LineColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["LineColor"]
+            shared["LineColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+        if indiv is None:
+            indiv = {"Opacity": 100}
         self.sharedAttributes = {
-            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "LineColor": EMFAttribute(
+                self, "LineColor", ColorAttributeWidget, {},
+                shared["LineColor"][0], shared["LineColor"][1]),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
         }
         self.individualAttributes = {}
 
@@ -68,17 +76,25 @@ class GridDisplay(EMFDisplayItem):
 
 
 class ColorBGDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ColorBGDisplay, self).__init__(name, NodeLayer)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+        if indiv is None:
+            indiv = {"Opacity": 100}
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
         }
         self.individualAttributes = {
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
         }
 
     def classStr(self):
@@ -97,20 +113,25 @@ class ColorBGDisplay(EMFDisplayItem):
 
 
 class ImageBGDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ImageBGDisplay, self).__init__(name, NodeLayer)
+        if shared is None:
+            shared = {"Image": (None, "Choose a file...")}
+        else:
+            shared["Image"] = (QPixmap(shared["Image"]), shared["Image"])
+        if indiv is None:
+            indiv = {"Opacity": 100}
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
-                                  {"startValue": {
-                                      "path": "Choose a file...",
-                                      "image": None}})
+            "Image": EMFAttribute(
+                self, "Image", FilePickerAttributeWidget, {},
+                shared["Image"][0], shared["Image"][1])
         }
 
         self.individualAttributes = {
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
         }
 
     def classStr(self):
@@ -122,7 +143,7 @@ class ImageBGDisplay(EMFDisplayItem):
         values = item.diValues(self)
         opacity = values["Opacity"]
         painter.setOpacity(opacity / 100)
-        img = self.sharedAttributes["Image"].getValue()["image"]
+        img = self.sharedAttributes["Image"].getValue()
         img = QPixmap("error_image.png") if img is None else img
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(img))

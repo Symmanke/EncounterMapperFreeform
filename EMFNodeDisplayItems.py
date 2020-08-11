@@ -85,6 +85,8 @@ class ImageDisplay(EMFDisplayItem):
         super(ImageDisplay, self).__init__(name, EMFNode)
         if shared is None:
             shared = {"Image": (None, "Choose a file...")}
+        else:
+            shared["Image"] = (QPixmap(shared["Image"]), shared["Image"])
         if indiv is None:
             indiv = {"SizeRatio": 100,
                      "Rotation": 0,
@@ -93,7 +95,6 @@ class ImageDisplay(EMFDisplayItem):
             "Image": EMFAttribute(
                 self, "Image", FilePickerAttributeWidget, {},
                 shared["Image"][0], shared["Image"][1])
-
         }
 
         self.individualAttributes = {
@@ -119,7 +120,7 @@ class ImageDisplay(EMFDisplayItem):
         point = item.point()
         values = item.diValues(self)
 
-        pm = self.sharedAttributes["Image"].getValue()["image"]
+        pm = self.sharedAttributes["Image"].getValue()
         pm = QPixmap("error_image.png") if pm is None else pm
 
         # opacity values

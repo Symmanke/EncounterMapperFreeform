@@ -30,19 +30,31 @@ from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
 
 
 class ColorShapeDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ColorShapeDisplay, self).__init__(name, EMFShape)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0)),
+                      "LineColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            slc = shared["LineColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+            shared["LineColor"] = (QColor(slc[0], slc[1], slc[2]), slc)
+        if indiv is None:
+            indiv = {"Opacity": 100}
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
-            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
+            "LineColor": EMFAttribute(
+                self, "LineColor", ColorAttributeWidget, {},
+                shared["LineColor"][0], shared["LineColor"][1]),
         }
         self.individualAttributes = {
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                shared["Opacity"], shared["Opacity"]),
         }
 
     def classStr(self):
@@ -62,20 +74,25 @@ class ColorShapeDisplay(EMFDisplayItem):
 
 
 class ImageShapeDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ImageShapeDisplay, self).__init__(name, EMFShape)
+        if shared is None:
+            shared = {"Image": (None, "Choose a file...")}
+        else:
+            shared["Image"] = (QPixmap(shared["Image"]), shared["Image"])
+        if indiv is None:
+            indiv = {"Opacity": 100}
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
-                                  {"startValue": {
-                                      "path": "Choose a file...",
-                                      "image": None}})
+            "Image": EMFAttribute(
+                self, "Image", FilePickerAttributeWidget, {},
+                shared["Image"][0], shared["Image"][1])
         }
 
         self.individualAttributes = {
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
         }
 
     def classStr(self):
@@ -87,7 +104,7 @@ class ImageShapeDisplay(EMFDisplayItem):
         values = item.diValues(self)
         opacity = values["Opacity"]
         painter.setOpacity(opacity / 100)
-        img = self.sharedAttributes["Image"].getValue()["image"]
+        img = self.sharedAttributes["Image"].getValue()
         img = QPixmap("error_image.png") if img is None else img
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(img))

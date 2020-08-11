@@ -38,8 +38,6 @@ class EMFAttribute:
         self.name = name
         self.widgetclass = widgetClass
         self.widgetParams = widgetParams
-        # if "startValues" in widgetParams:
-        #     self.value = widgetParams["startValues"]
 
     def getName(self):
         return self.name

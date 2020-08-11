@@ -31,25 +31,40 @@ from EMFAttribute import (EMFAttribute, ScrollbarAttributeWidget,
 import math
 
 
+# TODO: update for ColorLineDisplay
 class ColorLineDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ColorLineDisplay, self).__init__(name, EMFLine)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0)),
+                      "LineColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            slc = shared["LineColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+            shared["LineColor"] = (QColor(slc[0], slc[1], slc[2]), slc)
+        if indiv is None:
+            indiv = {"Width": 24,
+                     "Opacity": 100}
+
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
-            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
+            "LineColor": EMFAttribute(
+                self, "LineColor", ColorAttributeWidget, {},
+                shared["LineColor"][0], shared["LineColor"][1]),
         }
         self.individualAttributes = {
-            "Width": EMFAttribute(self, "Width", ScrollbarAttributeWidget,
-                                  {"minimum": 0,
-                                   "maximum": 36,
-                                   "startValue": 24}),
+            "Width": EMFAttribute(
+                self, "Width", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 36},
+                indiv["Width"], indiv["Width"]),
 
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
         }
 
     def classStr(self):
@@ -59,30 +74,37 @@ class ColorLineDisplay(EMFDisplayItem):
 class ImageLineDisplay(EMFDisplayItem):
     def __init__(self, name, shared=None, indiv=None):
         super(ImageLineDisplay, self).__init__(name, EMFLine)
+        if shared is None:
+            shared = {"Image": (None, "Choose a file...")}
+        else:
+            shared["Image"] = (QPixmap(shared["Image"]), shared["Image"])
+        if indiv is None:
+            indiv = {"Opacity": 100,
+                     "ShowEndCaps": True,
+                     "EndCapRatio": 100,
+                     "ReverseImage": False}
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
-                                  {"startValue": {
-                                      "path": "Choose a file...",
-                                      "image": None}})
-
+            "Image": EMFAttribute(
+                self, "Image", FilePickerAttributeWidget, {},
+                shared["Image"][0], shared["Image"][1])
         }
 
         self.individualAttributes = {
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
-            "ShowEndCaps": EMFAttribute(self, "ShowEndCaps",
-                                        CheckBoxAttributeWidget,
-                                        {"startValue": True}),
-            "EndCapRatio": EMFAttribute(self, "EndCapRatio",
-                                        ScrollbarAttributeWidget,
-                                        {"minimum": 0,
-                                         "maximum": 100,
-                                         "startValue": 100}),
-            "ReverseImage": EMFAttribute(self, "ReverseImage",
-                                         CheckBoxAttributeWidget,
-                                         {"startValue": False}),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]
+            ),
+            "ShowEndCaps": EMFAttribute(
+                self, "ShowEndCaps", CheckBoxAttributeWidget, {},
+                indiv["ShowEndCaps"], indiv["ShowEndCaps"]),
+            "EndCapRatio": EMFAttribute(
+                self, "EndCapRatio", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["EndCapRatio"], indiv["EndCapRatio"]),
+            "ReverseImage": EMFAttribute(
+                self, "ReverseImage", CheckBoxAttributeWidget, {},
+                indiv["ReverseImage"], indiv["ReverseImage"]),
         }
 
     def classStr(self):
@@ -95,7 +117,7 @@ class ImageLineDisplay(EMFDisplayItem):
         median = EMFNodeHelper.medianNode(points)
         values = item.diValues(self)
 
-        pm = self.sharedAttributes["Image"].getValue()["image"]
+        pm = self.sharedAttributes["Image"].getValue()
         pm = QPixmap("error_image.png") if pm is None else pm
         thickness = pm.height()
         wallpm = None
@@ -139,33 +161,46 @@ class ImageLineDisplay(EMFDisplayItem):
 
 
 class ColorDoorDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ColorDoorDisplay, self).__init__(name, EMFLine)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0)),
+                      "LineColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            slc = shared["LineColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+            shared["LineColor"] = (QColor(slc[0], slc[1], slc[2]), slc)
+        if indiv is None:
+            indiv = {"Length": 24,
+                     "Width": 24,
+                     "Opacity": 100,
+                     "Position": 50}
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
-            "LineColor": EMFAttribute(self, "LineColor", ColorAttributeWidget,
-                                      {"startValue": (0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
+            "LineColor": EMFAttribute(
+                self, "LineColor", ColorAttributeWidget, {},
+                shared["LineColor"][0], shared["LineColor"][1]),
         }
         self.individualAttributes = {
-            "Length": EMFAttribute(self, "Length", ScrollbarAttributeWidget,
-                                   {"minimum": 0,
-                                    "maximum": 36,
-                                    "startValue": 24}),
-            "Width": EMFAttribute(self, "Width", ScrollbarAttributeWidget,
-                                  {"minimum": 0,
-                                   "maximum": 36,
-                                   "startValue": 24}),
-
-            "Opacity": EMFAttribute(self, "Opacity", ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 100,
-                                     "startValue": 100}),
-            "Position": EMFAttribute(self, "Position",
-                                     ScrollbarAttributeWidget,
-                                     {"minimum": 0,
-                                      "maximum": 100,
-                                      "startValue": 50}),
+            "Length": EMFAttribute(
+                self, "Length", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 36},
+                indiv["Length"], indiv["Length"]),
+            "Width": EMFAttribute(
+                self, "Width", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 36},
+                indiv["Width"], indiv["Width"]),
+            "Opacity": EMFAttribute(
+                self, "Opacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Opacity"], indiv["Opacity"]),
+            "Position": EMFAttribute(
+                self, "Position", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Position"], indiv["Position"]),
         }
 
     def classStr(self):
@@ -173,35 +208,39 @@ class ColorDoorDisplay(EMFDisplayItem):
 
 
 class ImageDoorDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(ImageDoorDisplay, self).__init__(name, EMFLine)
+        if shared is None:
+            shared = {"Image": (None, "Choose a file...")}
+        else:
+            shared["Image"] = (QPixmap(shared["Image"]), shared["Image"])
+        if indiv is None:
+            indiv = {"Position": 100,
+                     "ReverseImage": False,
+                     "Number": 1,
+                     "Spacing": 0}
         self.sharedAttributes = {
-            "Image": EMFAttribute(self, "Image", FilePickerAttributeWidget,
-                                  {"startValue": {
-                                      "path": "Choose a file...",
-                                      "image": None}})
-
+            "Image": EMFAttribute(
+                self, "Image", FilePickerAttributeWidget, {},
+                shared["Image"][0], shared["Image"][1])
         }
 
         self.individualAttributes = {
-            "Position": EMFAttribute(self, "Position",
-                                     ScrollbarAttributeWidget,
-                                     {"minimum": 0,
-                                      "maximum": 100,
-                                      "startValue": 50}),
-            "ReverseImage": EMFAttribute(self, "ReverseImage",
-                                         CheckBoxAttributeWidget,
-                                         {"startValue": False}),
-            "Number": EMFAttribute(self, "Number",
-                                   ScrollbarAttributeWidget,
-                                   {"minimum": 0,
-                                    "maximum": 5,
-                                    "startValue": 1}),
-            "Spacing": EMFAttribute(self, "Spacing",
-                                    ScrollbarAttributeWidget,
-                                    {"minimum": 0,
-                                     "maximum": 360,
-                                     "startValue": 0}),
+            "Position": EMFAttribute(
+                self, "Position", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 100},
+                indiv["Position"], indiv["Position"]),
+            "ReverseImage": EMFAttribute(
+                self, "ReverseImage", CheckBoxAttributeWidget, {},
+                indiv["ReverseImage"], indiv["ReverseImage"]),
+            "Number": EMFAttribute(
+                self, "Number", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 5},
+                indiv["Number"], indiv["Number"]),
+            "Spacing": EMFAttribute(
+                self, "Spacing", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 360},
+                indiv["Spacing"], indiv["Spacing"]),
         }
 
     def classStr(self):
@@ -214,7 +253,7 @@ class ImageDoorDisplay(EMFDisplayItem):
         values = item.diValues(self)
         drawPos = EMFNodeHelper.pointOnLine(item, values["Position"]/100)
 
-        pm = self.sharedAttributes["Image"].getValue()["image"]
+        pm = self.sharedAttributes["Image"].getValue()
         pm = QPixmap("error_image.png") if pm is None else pm
         num = values["Number"]
         print("NUMBER: {}".format(num))
@@ -242,31 +281,40 @@ class ImageDoorDisplay(EMFDisplayItem):
 
 
 class LineShadowRadiusDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(LineShadowRadiusDisplay, self).__init__(name, EMFLine)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+        if indiv is None:
+            indiv = {"Size": 24,
+                     "StartOpacity": 125,
+                     "EndOpacity": 0,
+                     "ShowEndCaps": True}
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
         }
-        self.individualAttributes = {
-            "Size": EMFAttribute(self, "Size", SpinboxAttributeWidget,
-                                 {"minimum": 0,
-                                  "maximum": 1024,
-                                  "startValue": 24}),
 
-            "StartOpacity": EMFAttribute(self, "StartOpacity",
-                                         ScrollbarAttributeWidget,
-                                         {"minimum": 0,
-                                          "maximum": 255,
-                                          "startValue": 125}),
-            "EndOpacity": EMFAttribute(self, "EndOpacity",
-                                       ScrollbarAttributeWidget,
-                                       {"minimum": 0,
-                                        "maximum": 255,
-                                        "startValue": 0}),
-            "ShowEndCaps": EMFAttribute(self, "ShowEndCaps",
-                                        CheckBoxAttributeWidget,
-                                        {"startValue": True})
+        self.individualAttributes = {
+            "Size": EMFAttribute(
+                self, "Size", SpinboxAttributeWidget,
+                {"minimum": 0, "maximum": 1024},
+                indiv["Size"], indiv["Size"]),
+            "StartOpacity": EMFAttribute(
+                self, "StartOpacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 255},
+                indiv["StartOpacity"], indiv["StartOpacity"]),
+            "EndOpacity": EMFAttribute(
+                self, "EndOpacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 255},
+                indiv["EndOpacity"], indiv["EndOpacity"]),
+            "ShowEndCaps": EMFAttribute(
+                self, "ShowEndCaps", CheckBoxAttributeWidget, {},
+                indiv["ShowEndCaps"], indiv["ShowEndCaps"])
         }
 
     def classStr(self):
@@ -336,7 +384,6 @@ class LineShadowRadiusDisplay(EMFDisplayItem):
             pmPainter.end()
 
         # set gradient colors
-
         transform = QTransform()
 
         transform.rotate(comparison[2]-90)
@@ -348,31 +395,40 @@ class LineShadowRadiusDisplay(EMFDisplayItem):
 
 
 class LineShadowLengthDisplay(EMFDisplayItem):
-    def __init__(self, name):
+    def __init__(self, name, shared=None, indiv=None):
         super(LineShadowLengthDisplay, self).__init__(name, EMFLine)
+        if shared is None:
+            shared = {"FillColor": (QColor(0, 0, 0), (0, 0, 0))}
+        else:
+            sfc = shared["FillColor"]
+            shared["FillColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
+        if indiv is None:
+            indiv = {"Size": 24,
+                     "StartOpacity": 125,
+                     "EndOpacity": 0,
+                     "ShowEndCaps": True}
         self.sharedAttributes = {
-            "FillColor": EMFAttribute(self, "FillColor", ColorAttributeWidget,
-                                      {"startValue": QColor(0, 0, 0)}),
+            "FillColor": EMFAttribute(
+                self, "FillColor", ColorAttributeWidget, {},
+                shared["FillColor"][0], shared["FillColor"][1]),
         }
-        self.individualAttributes = {
-            "Width": EMFAttribute(self, "Width", ScrollbarAttributeWidget,
-                                  {"minimum": 0,
-                                   "maximum": 360,
-                                   "startValue": 24}),
 
-            "StartOpacity": EMFAttribute(self, "StartOpacity",
-                                         ScrollbarAttributeWidget,
-                                         {"minimum": 0,
-                                          "maximum": 255,
-                                          "startValue": 125}),
-            "EndOpacity": EMFAttribute(self, "EndOpacity",
-                                       ScrollbarAttributeWidget,
-                                       {"minimum": 0,
-                                        "maximum": 255,
-                                        "startValue": 0}),
-            "ShowEndCaps": EMFAttribute(self, "ShowEndCaps",
-                                        CheckBoxAttributeWidget,
-                                        {"startValue": True})
+        self.individualAttributes = {
+            "Width": EMFAttribute(
+                self, "Width", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 360},
+                indiv["Width"], indiv["Width"]),
+            "StartOpacity": EMFAttribute(
+                self, "StartOpacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 255},
+                indiv["StartOpacity"], indiv["StartOpacity"]),
+            "EndOpacity": EMFAttribute(
+                self, "EndOpacity", ScrollbarAttributeWidget,
+                {"minimum": 0, "maximum": 255},
+                indiv["EndOpacity"], indiv["EndOpacity"]),
+            "ShowEndCaps": EMFAttribute(
+                self, "ShowEndCaps", CheckBoxAttributeWidget, {},
+                indiv["ShowEndCaps"], indiv["ShowEndCaps"])
         }
 
     def classStr(self):
@@ -428,7 +484,6 @@ class LineShadowLengthDisplay(EMFDisplayItem):
             pmPainter.end()
 
         # set gradient colors
-
         transform = QTransform()
 
         transform.rotate(comparison[2]-90)
