@@ -324,10 +324,13 @@ class NodeEditor(QWidget):
 
     # duplicate a selected series of nodes. doesn't duplicate the connected
     # lines or shapes
+
     def duplicateNodes(self, nodes):
         newNodes = []
         for node in nodes:
-            newNodes.append(EMFNode.createFromNode(node))
+            newNode = EMFNode.createFromNode(node)
+            self.map.copyDIAttributes(newNode, node)
+            newNodes.append(newNode)
 
         self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, newNodes)
         self.map.setSelectedItems(newNodes)
@@ -341,14 +344,17 @@ class NodeEditor(QWidget):
             lineNodes = []
             for node in line.nodes():
                 if node not in oldNodes:
-                    dupeNode = EMFNode.createFromNode(node)
-                    newNodes.append(dupeNode)
+                    newNode = EMFNode.createFromNode(node)
+                    self.map.copyDIAttributes(newNode, node)
+                    newNodes.append(newNode)
                     oldNodes.append(node)
-                    lineNodes.append(dupeNode)
+                    lineNodes.append(newNode)
                 else:
                     # grab node somewhere else
                     lineNodes.append(newNodes[oldNodes.index(node)])
-            newLines.append(EMFLine(lineNodes[0], lineNodes[1]))
+            newLine = EMFLine(lineNodes[0], lineNodes[1])
+            self.map.copyDIAttributes(newLine, line)
+            newLines.append(newLine)
 
         self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, newNodes)
         self.map.addItemsToCurrentLayer(NodeLayer.TYPE_LINE, newLines)
@@ -363,13 +369,21 @@ class NodeEditor(QWidget):
             shapeNodes = []
             for node in shape.nodes():
                 if node not in oldNodes:
-                    dupeNode = EMFNode.createFromNode(node)
-                    newNodes.append(dupeNode)
+                    newNode = EMFNode.createFromNode(node)
+                    self.map.copyDIAttributes(newNode, node)
+                    newNodes.append(newNode)
                     oldNodes.append(node)
-                    shapeNodes.append(dupeNode)
+                    shapeNodes.append(newNode)
                 else:
                     shapeNodes.append(newNodes[oldNodes.index(node)])
-            newShapes.append(EMFShape(shapeNodes, False))
+            newShape = EMFShape(shapeNodes, False)
+            self.map.copyDIAttributes(newShape, shape)
+            newShapes.append(newShape)
+            # grab shape lines, duplicate those DIs:
+            osLines = shape.lines()
+            nsLines = newShape.lines()
+            for i in range(len(osLines)):
+                self.map.copyDIAttributes(nsLines[i], osLines[i])
         self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, newNodes)
         self.map.addItemsToCurrentLayer(NodeLayer.TYPE_SHAPE, newShapes)
 

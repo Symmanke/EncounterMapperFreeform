@@ -22,6 +22,7 @@ from PyQt5.QtCore import pyqtSignal, QObject
 
 from DisplayItemPicker import DisplayItemPicker
 from EMFNodes import NodeLayer, EMFNode, EMFLine, EMFShape
+import copy
 
 
 class EMFMap(QObject):
@@ -131,6 +132,10 @@ class EMFMap(QObject):
     # /////////////////////////////// #
     # Display Item Management Methods #
     # /////////////////////////////// #
+
+    def copyDIAttributes(self, dupe, orig):
+        for di in orig.currentDIs():
+            di.addItem(dupe, copy.copy(orig.diValues(di)))
 
     def diUpdated(self):
         self.displayItemValuesUpdated.emit()
