@@ -39,14 +39,15 @@ class NodeEditor(QWidget):
     selectTypeSwitched = pyqtSignal()
     modeTypeSwitched = pyqtSignal()
 
-    def __init__(self, map, width=600, height=400):
+    def __init__(self, map):
         super(NodeEditor, self).__init__()
         self.showDebug = True
         self.map = map
         self.map.selectionUpdated.connect(self.mapSelectionUpdated)
         self.map.displayItemValuesUpdated.connect(self.repaint)
-        self.layerWidth = width
-        self.layerHeight = height
+        self.map.mapResized.connect(self.updateMapDimensions)
+        self.layerWidth = map.getWidth()*72
+        self.layerHeight = map.getHeight()*72
         # self.currentNodeLayer = NodeLayer(width, height)
         self.selectedType = NodeLayer.TYPE_NODE
         self.selectedItems = []
@@ -67,8 +68,8 @@ class NodeEditor(QWidget):
         self.map.addItemToCurrentLayer(NodeLayer.TYPE_SHAPE, shape)
         self.map.addItemsToCurrentLayer(NodeLayer.TYPE_NODE, nodes)
 
-        self.setFixedWidth(width)
-        self.setFixedHeight(height)
+        self.setFixedWidth(self.layerWidth)
+        self.setFixedHeight(self.layerHeight)
         self.setMouseTracking(True)
 
         self.keyBindings = {
@@ -96,7 +97,15 @@ class NodeEditor(QWidget):
         self.map = map
         self.map.selectionUpdated.connect(self.mapSelectionUpdated)
         self.map.displayItemValuesUpdated.connect(self.repaint)
+        self.map.mapResized.connect(self.updateMapDimensions)
         self.mapSelectionUpdated()
+        self.updateMapDimensions()
+
+    def updateMapDimensions(self):
+        self.layerWidth = self.map.getWidth() * 72
+        self.layerHeight = self.map.getHeight() * 72
+        self.setFixedWidth(self.layerWidth)
+        self.setFixedHeight(self.layerHeight)
         self.repaint()
 
     def toggleView(self):

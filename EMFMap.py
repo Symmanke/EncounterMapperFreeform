@@ -32,6 +32,7 @@ class EMFMap(QObject):
     displayItemListUpdated = pyqtSignal()
     displayItemValuesUpdated = pyqtSignal()
     selectedDIUpdated = pyqtSignal()
+    mapResized = pyqtSignal()
 
     CLASS_TO_TYPE = {
         NodeLayer: "NONE",
@@ -46,7 +47,7 @@ class EMFMap(QObject):
         # Node Layers, Nodes, Lines
         self.width = width
         self.height = height
-        self.nodeLayers = ([NodeLayer(width, height)] if layers is None
+        self.nodeLayers = ([NodeLayer(width*72, height*72)] if layers is None
                            else layers)
         self.currentLayer = currentLayer
 
@@ -73,6 +74,19 @@ class EMFMap(QObject):
         return cls(jsContents["Width"], jsContents["Height"],
                    layers, displayItems, jsContents["CurrentLayer"],
                    jsContents["SelectedDI"])
+
+    def getWidth(self):
+        return self.width
+
+    def getHeight(self):
+        return self.height
+
+    def setMapDimensions(self, width, height, xOff, yOff):
+        for layer in self.nodeLayers:
+            layer.setLayerDimensions(width*72, height*72, xOff * 72, yOff * 72)
+        self.width = width
+        self.height = height
+        self.mapResized.emit()
 
     # ////////////////////////////// #
     # Node and Layer Element Methods #

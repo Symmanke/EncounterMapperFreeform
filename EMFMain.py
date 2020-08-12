@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QApplication, QWidget,
+from PyQt5.QtWidgets import (QApplication, QWidget, QDialog,
                              QSplitter, QFileDialog,
                              QVBoxLayout, QScrollArea)
 from PyQt5.QtGui import QPalette, QPainter, QPixmap
@@ -28,6 +28,7 @@ from PyQt5.QtGui import QPalette, QPainter, QPixmap
 from EMFDisplayItemsSidebar import DisplayItemSidebar
 from EMFNodeEditor import NodeEditor
 from EMFMap import EMFMap
+from EMFMapResizeDialog import MapResizeDialog
 
 import json
 
@@ -35,9 +36,9 @@ import json
 class EMFMain(QWidget):
     def __init__(self):
         super(EMFMain, self).__init__()
-        self.map = EMFMap(720, 720)
+        self.map = EMFMap(10, 10)
         self.splitter = QSplitter(Qt.Horizontal)
-        self.editor = NodeEditor(self.map, 720, 720)
+        self.editor = NodeEditor(self.map)
         self.sideBar = DisplayItemSidebar(self.map)
         scroll = QScrollArea()
         scroll.setBackgroundRole(QPalette.Dark)
@@ -50,6 +51,9 @@ class EMFMain(QWidget):
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
+        self.resizeDialog = None
+        self.resizeEditor = None
+
         self.keyBindings = {
             Qt.Key_E | Qt.ControlModifier: (self.exportEncounterMap,),
             Qt.Key_E | Qt.ControlModifier | Qt.ShiftModifier:
@@ -59,6 +63,7 @@ class EMFMain(QWidget):
             # (self.saveAsEncounter,),
             # Qt.Key_N | Qt.ControlModifier: (self.newEncounterOpenDialog,),
             Qt.Key_O | Qt.ControlModifier: (self.openEncounter,),
+            Qt.Key_R | Qt.ControlModifier: (self.resizeEncounter,),
         }
 
     def keyPressEvent(self, event):
@@ -69,6 +74,31 @@ class EMFMain(QWidget):
                 command[0]()
             else:
                 command[0](command[1])
+
+    def resizeEncounter(self):
+        def applyEdit():
+            rs = self.resizeEditor.getUpdateDimensions()
+            self.map.setMapDimensions(rs[0], rs[1], rs[2], rs[3])
+            self.resizeDialog.close()
+            self.resizeDialog = None
+            self.resizeEditor = None
+
+        def cancelEdit():
+            self.resizeDialog.close()
+            self.resizeDialog = None
+            self.resizeEditor = None
+        pass
+
+        self.resizeDialog = QDialog()
+        layout = QVBoxLayout()
+
+        self.resizeEditor = MapResizeDialog(self.map)
+        self.resizeEditor.acceptedAction.connect(applyEdit)
+        self.resizeEditor.cancelledAction.connect(cancelEdit)
+
+        layout.addWidget(self.resizeEditor)
+        self.resizeDialog.setLayout(layout)
+        self.resizeDialog.exec_()
 
     def exportEncounterMap(self, singleLayer=True):
         filePath = QFileDialog.getSaveFileName(self, "Open Encounter",

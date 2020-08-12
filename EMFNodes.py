@@ -43,6 +43,7 @@ class NodeLayer(DIPropertyHolder):
             NodeLayer.TYPE_LINE: lines,
             NodeLayer.TYPE_SHAPE: shapes
         }
+        print(self.layerItems)
 
         self.layerWidth = width
         self.layerHeight = height
@@ -88,6 +89,16 @@ class NodeLayer(DIPropertyHolder):
 
     def getDimensions(self):
         return (self.layerWidth, self.layerHeight)
+
+    def setLayerDimensions(self, width, height, xOff, yOff):
+        self.layerWidth = width
+        self.layerHeight = height
+        # print(self.layerItems[NodeLayer.TYPE_NODE])
+        for node in self.layerItems[NodeLayer.TYPE_NODE]:
+            # print("{}, {}, {}, {}".format(node,
+            #                               node.x(), node.y(), node.offset))
+            node.offset(xOff, yOff)
+        self.needsRedraw = True
 
     def setLayerImage(self, image):
         self.layerImage = image
@@ -184,6 +195,10 @@ class EMFNode(DIPropertyHolder):
     def grab(self, offset):
         self.nPoint.setX(self.tempX + offset[0])
         self.nPoint.setY(self.tempY + offset[1])
+
+    def offset(self, xOff, yOff):
+        self.nPoint.setX(self.nPoint.x() + xOff)
+        self.nPoint.setY(self.nPoint.y() + yOff)
 
     def rotate(self, deltaAngle):
         angle = math.radians(self.transformComparison[2] + deltaAngle)
