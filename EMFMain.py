@@ -111,6 +111,7 @@ class EMFMain(QWidget):
             self.exportEditor = None
 
         def applyExport():
+            self.exportEditor.performExport()
             endExport()
 
         self.exportDialog = QDialog()
@@ -123,26 +124,6 @@ class EMFMain(QWidget):
         layout.addWidget(self.exportEditor)
         self.exportDialog.setLayout(layout)
         self.exportDialog.exec_()
-        # filePath = QFileDialog.getSaveFileName(self, "Open Encounter",
-        #                                        "", "Image (*.png)")
-        # print("exporting map at: {}".format(filePath))
-        # if filePath is not None:
-        #     fp = filePath[0]
-        #     if fp.endswith(".png"):
-        #         fp = fp[:-4]
-        #     mapImages = self.map.getLayerImages()
-        #     print("retrieved {} map Images".format(len(mapImages)))
-        #     if singleLayer:
-        #         img = QPixmap(mapImages[0].width(), mapImages[0].height())
-        #         painter = QPainter(img)
-        #         for i in range(len(mapImages)):
-        #             painter.drawImage(0, 0, mapImages[i])
-        #         painter.end()
-        #         img.save(fp+".png", "PNG")
-        #     else:
-        #         for i in range(len(mapImages)):
-        #             mapImages[i].save(fp+"_L{}.png".format(i), "PNG")
-        #             print("Exported Encounter Map!!!")
 
     def saveEncounter(self):
         filePath = QFileDialog.getSaveFileName(

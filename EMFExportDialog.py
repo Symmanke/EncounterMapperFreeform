@@ -19,6 +19,9 @@ along with Encounter Mapper Freeform.
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+from PyQt5.QtGui import QPixmap, QPainter, QColor, QRegExpValidator
+from PyQt5.QtCore import QRegExp
+
 from PyQt5.QtWidgets import (QLabel, QLineEdit, QPushButton, QRadioButton,
                              QGridLayout, QFileDialog)
 from EMFEditAction import EditAction
@@ -46,8 +49,13 @@ class ExportDialog(EditAction):
         self.customLayerRadio.toggled.connect(
             lambda: self.radioBtnChanged(self.customLayerRadio))
         self.imageLayerLineEdit = QLineEdit("")
+        self.imageLayerLineEdit.textChanged.connect(self.updateUI)
         # TODO: create custom validator to handle lineEdit
         self.imageLayerLineEdit.setEnabled(False)
+        regex = QRegExp(
+            "[1-9][0-9]?(-[1-9][0-9]?)?(,[1-9][0-9]?(-[1-9][0-9]?)?)*")
+        self.imageLayerLineEdit.setValidator(
+            QRegExpValidator(regex))
         lineEditExLabel = QLabel("ex. 1,2-3,5")
 
         self.acceptBtn.setEnabled(False)
@@ -92,6 +100,36 @@ class ExportDialog(EditAction):
         elif btn.text() == ExportDialog.CUSTOM:
             self.imageLayerLineEdit.setEnabled(True)
 
+    def performExport(self):
+        # TODO: "prettify" up code in the future
+        images = self.map.getLayerImages()
+        width = images[0].width()
+        height = images[0].height()
+        strGroup = self.imageLayerLineEdit.text().split(",")
+        addPrefix = len(strGroup) > 1
+        for index in range(len(strGroup)):
+            str = strGroup[index]
+            exportImg = QPixmap(width, height)
+            exportImg.fill(QColor(0, 0, 0, 0))
+            beginRange = -1
+            endRange = -1
+            if str.find("-") > 0:
+                group = str.split("-")
+                beginRange = int(group[0])
+                endRange = int(group[1])
+            else:
+                beginRange = int(str)
+                endRange = int(str)
+            painter = QPainter(exportImg)
+            for i in range(beginRange-1, endRange):
+                painter.drawImage(0, 0, images[i])
+            painter.end()
+            filepath = self.filePath
+            if addPrefix:
+                filepath += "_{}".format(index)
+            exportImg.save(filepath+".png", "PNG")
+
     def updateUI(self):
-        self.acceptBtn.setEnabled(self.filePath is not None)
+        self.acceptBtn.setEnabled(self.filePath is not None and
+                                  self.imageLayerLineEdit.hasAcceptableInput())
         self.repaint()
