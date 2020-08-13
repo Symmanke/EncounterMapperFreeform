@@ -95,6 +95,7 @@ class MapLayerController(QFrame):
         self.shiftUpBtn.setEnabled(curIndex < layerNum)
         self.delLayerBtn.setEnabled(layerNum > 1)
         self.curLayerLabel.setText("L{}/{}".format(curIndex, layerNum))
+        self.repaint()
 
 
 class DisplayItemList(QFrame):
