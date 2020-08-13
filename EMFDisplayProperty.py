@@ -127,13 +127,16 @@ class EMFDisplayItem:
                 for item in itemSet:
                     item.updateAttribute(self,
                                          self.individualAttributes[attrName])
-
+        else:
+            for item in self.propertyItems:
+                item.sharedAttributeUpdated()
         self.parentMap.diUpdated()
 
     def drawDisplay(self, painter, layer, simple=True):
         drawMethod = self.drawSimple if simple else self.drawComplex
         for item in self.propertyItems:
-            drawMethod(painter, item)
+            if layer.containsItem(item):
+                drawMethod(painter, item)
 
     # draw the simple representation, which is easier to process
     def drawSimple(self, painter, item):

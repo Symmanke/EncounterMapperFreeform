@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QLabel, QPushButton,
                              QListWidget, QGridLayout, QFrame, QSplitter,
-                             QVBoxLayout, QDialog)
+                             QVBoxLayout, QDialog, QHBoxLayout)
 from DisplayItemPicker import DisplayItemPicker
 from DisplayAttributeList import DisplayAttributeList
 
@@ -37,13 +37,64 @@ class DisplayItemSidebar(QFrame):
         self.splitter.addWidget(self.diList)
         self.splitter.addWidget(self.diAttributes)
 
+        self.layerController = MapLayerController(map)
+
         layout = QVBoxLayout()
+        layout.addWidget(self.layerController)
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
     def setMap(self, map):
         self.diList.setMap(map)
         self.diAttributes.setMap(map)
+        self.layerController.setMap(map)
+
+
+class MapLayerController(QFrame):
+    def __init__(self, map=None):
+        super(MapLayerController, self).__init__()
+        self.map = map
+        self.map.mapLayerSwitched.connect(self.updateUI)
+        self.shiftUpBtn = QPushButton("Move UP")
+        self.shiftUpBtn.clicked.connect(
+            lambda: self.map.shiftCurrentLayer(True))
+        self.shiftDownBtn = QPushButton("Move DOWN")
+        self.shiftDownBtn.clicked.connect(
+            lambda: self.map.shiftCurrentLayer(False))
+        self.newLayerBtn = QPushButton("New Layer")
+        self.newLayerBtn.clicked.connect(lambda: self.map.addNewLayer())
+        self.delLayerBtn = QPushButton("Delete Layer")
+        self.changeUpBtn = QPushButton(">")
+        self.changeUpBtn.clicked.connect(lambda: self.map.changeLayerUp())
+        self.changeDownBtn = QPushButton("<")
+        self.changeDownBtn.clicked.connect(lambda: self.map.changeLayerDown())
+        self.curLayerLabel = QLabel()
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.newLayerBtn)
+        layout.addWidget(self.delLayerBtn)
+        layout.addWidget(self.changeDownBtn)
+        layout.addWidget(self.curLayerLabel)
+        layout.addWidget(self.changeUpBtn)
+        layout.addWidget(self.shiftDownBtn)
+        layout.addWidget(self.shiftUpBtn)
+        self.setLayout(layout)
+        self.updateUI()
+
+    def setMap(self, map):
+        self.map = map
+        self.map.mapLayerSwitched.connect(self.updateUI)
+        self.updateUI()
+
+    def updateUI(self):
+        curIndex = self.map.getCurrentLayerIndex() + 1
+        layerNum = self.map.getNumLayers()
+        self.changeDownBtn.setEnabled(curIndex > 1)
+        self.changeUpBtn.setEnabled(curIndex < layerNum)
+        self.shiftDownBtn.setEnabled(curIndex > 1)
+        self.shiftUpBtn.setEnabled(curIndex < layerNum)
+        self.delLayerBtn.setEnabled(layerNum > 1)
+        self.curLayerLabel.setText("L{}/{}".format(curIndex, layerNum))
 
 
 class DisplayItemList(QFrame):

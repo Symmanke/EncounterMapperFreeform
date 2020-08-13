@@ -28,7 +28,7 @@ import copy
 class EMFMap(QObject):
 
     selectionUpdated = pyqtSignal()
-    layerUpdated = pyqtSignal()
+    mapLayerSwitched = pyqtSignal()
     displayItemListUpdated = pyqtSignal()
     displayItemValuesUpdated = pyqtSignal()
     selectedDIUpdated = pyqtSignal()
@@ -137,11 +137,54 @@ class EMFMap(QObject):
     def getSelectedItems(self):
         return self.selectedItems
 
+    def getNumLayers(self):
+        return len(self.nodeLayers)
+
+    def getCurrentLayerIndex(self):
+        return self.currentLayer
+
     def getCurrentLayer(self):
         return self.nodeLayers[self.currentLayer]
 
     def getCurrentLayerItems(self, type):
         return self.nodeLayers[self.currentLayer].getList(type)
+
+    # //////////////////////////// #
+    # Map Layer Management Methods #
+    # //////////////////////////// #
+
+    def addNewLayer(self):
+        self.nodeLayers.insert(self.currentLayer+1,
+                               NodeLayer(self.width*72, self.height*72))
+        self.currentLayer += 1
+        self.mapLayerSwitched.emit()
+
+    def changeLayerUp(self):
+        if self.currentLayer < len(self.nodeLayers):
+            self.currentLayer += 1
+            self.mapLayerSwitched.emit()
+
+    def changeLayerDown(self):
+        if self.currentLayer > 0:
+            self.currentLayer -= 1
+            self.mapLayerSwitched.emit()
+
+    def shiftCurrentLayer(self, shiftUp):
+        index = self.currentLayer
+        if shiftUp:
+            if index > -1 and index != len(self.displayItems)-1:
+                shift = self.nodeLayers[index]
+                self.nodeLayers[index] = self.nodeLayers[index+1]
+                self.nodeLayers[index+1] = shift
+                self.currentLayer += 1
+                self.mapLayerSwitched.emit()
+        else:
+            if index > 0:
+                shift = self.nodeLayers[index]
+                self.nodeLayers[index] = self.nodeLayers[index-1]
+                self.nodeLayers[index-1] = shift
+                self.currentLayer -= 1
+                self.mapLayerSwitched.emit()
 
     # /////////////////////////////// #
     # Display Item Management Methods #
@@ -221,12 +264,17 @@ class EMFMap(QObject):
 
     def getLayerImages(self):
         layerImgList = []
-        for i in range(len(self.nodeLayers)):
-            img = self.nodeLayers[i].getLayerImage()
-            if img is None or i == self.currentLayer:
-                # TODO: or self.nodeLayers[i].NeedsRedraw():
-                img = self.nodeLayers[i].redrawLayerImage(self.displayItems)
+        for nl in self.nodeLayers:
+            img = nl.getLayerImage()
+            if img is None or nl.NeedsRedraw():
+                img = nl.redrawLayerImage(self.displayItems)
             layerImgList.append(img)
+        # for i in range(len(self.nodeLayers)):
+        #     img = self.nodeLayers[i].getLayerImage()
+        #     if img is None or i == self.currentLayer:
+        #         # TODO: or self.nodeLayers[i].NeedsRedraw():
+        #         img = self.nodeLayers[i].redrawLayerImage(self.displayItems)
+        #     layerImgList.append(img)
         return layerImgList
 
     def jsonObj(self):

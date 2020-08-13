@@ -32,12 +32,11 @@ class GridDisplay(EMFDisplayItem):
     def __init__(self, name, shared=None, indiv=None):
         super(GridDisplay, self).__init__(name, NodeLayer)
         if shared is None:
-            shared = {"LineColor": (QColor(0, 0, 0), (0, 0, 0))}
+            shared = {"LineColor": (QColor(0, 0, 0), (0, 0, 0)),
+                      "Opacity": 100}
         else:
             sfc = shared["LineColor"]
             shared["LineColor"] = (QColor(sfc[0], sfc[1], sfc[2]), sfc)
-        if indiv is None:
-            indiv = {"Opacity": 100}
         self.sharedAttributes = {
             "LineColor": EMFAttribute(
                 self, "LineColor", ColorAttributeWidget, {},

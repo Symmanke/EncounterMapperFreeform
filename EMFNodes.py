@@ -38,17 +38,25 @@ class NodeLayer(DIPropertyHolder):
         nodes = [] if nodes is None else nodes
         lines = [] if lines is None else lines
         shapes = [] if shapes is None else shapes
+
+        def setPL(items):
+            for item in items:
+                item.setParentLayer(self)
+        setPL(nodes)
+        setPL(lines)
+        setPL(shapes)
+
         self.layerItems = {
             NodeLayer.TYPE_NODE: nodes,
             NodeLayer.TYPE_LINE: lines,
             NodeLayer.TYPE_SHAPE: shapes
         }
-        print(self.layerItems)
 
         self.layerWidth = width
         self.layerHeight = height
         self.layerImage = None
         self.needsRedraw = True
+        self.parentLayer = self
 
     @classmethod
     def createFromJSON(cls, jsContents, displayItems, width, height):
@@ -69,10 +77,23 @@ class NodeLayer(DIPropertyHolder):
                 layer, jsContents["DIProperties"][dIndex])
         return layer
 
+    def containsItem(self, item):
+        itemType = None
+        if isinstance(item, EMFNode):
+            itemType = NodeLayer.TYPE_NODE
+        elif isinstance(item, EMFLine):
+            itemType = NodeLayer.TYPE_LINE
+        elif isinstance(item, EMFShape):
+            itemType = NodeLayer.TYPE_SHAPE
+        elif isinstance(item, NodeLayer):
+            return item is self
+        return item in self.layerItems[itemType]
+
     def addItemToLayer(self, type, item):
         typeList = self.layerItems[type]
         if item not in typeList:
             typeList.append(item)
+            item.setParentLayer(self)
             if type == NodeLayer.TYPE_SHAPE:
                 self.addItemsToLayer(NodeLayer.TYPE_LINE, item.lines())
 
@@ -83,6 +104,7 @@ class NodeLayer(DIPropertyHolder):
     def removeFromLayer(self, type, item):
         if item in self.layerItems[type]:
             self.layerItems[type].remove(item)
+            item.setParentLayer(None)
 
     def getList(self, type):
         return self.layerItems[type]
@@ -108,6 +130,9 @@ class NodeLayer(DIPropertyHolder):
 
     def setNeedRedraw(self):
         self.needsRedraw = True
+
+    def NeedsRedraw(self):
+        return self.needsRedraw
 
     def redrawLayerImage(self, dis):
         self.layerImage = QImage(self.layerWidth, self.layerHeight,
@@ -195,6 +220,7 @@ class EMFNode(DIPropertyHolder):
     def grab(self, offset):
         self.nPoint.setX(self.tempX + offset[0])
         self.nPoint.setY(self.tempY + offset[1])
+        self.parentLayer.setNeedRedraw()
 
     def offset(self, xOff, yOff):
         self.nPoint.setX(self.nPoint.x() + xOff)
@@ -206,12 +232,14 @@ class EMFNode(DIPropertyHolder):
                          self.transformComparison[3] * math.cos(angle))
         self.nPoint.setY(self.transformComparison[0].y() +
                          self.transformComparison[3] * math.sin(angle))
+        self.parentLayer.setNeedRedraw()
 
     def scale(self, size):
         self.nPoint.setX(self.transformComparison[0].x() +
                          self.offsetNode.x()*size)
         self.nPoint.setY(self.transformComparison[0].y() +
                          self.offsetNode.y()*size)
+        self.parentLayer.setNeedRedraw()
 
     def x(self):
         return self.nPoint.x()

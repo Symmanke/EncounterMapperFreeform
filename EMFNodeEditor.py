@@ -42,10 +42,12 @@ class NodeEditor(QWidget):
     def __init__(self, map):
         super(NodeEditor, self).__init__()
         self.showDebug = True
+        self.showFullMap = False
         self.map = map
         self.map.selectionUpdated.connect(self.mapSelectionUpdated)
         self.map.displayItemValuesUpdated.connect(self.repaint)
         self.map.mapResized.connect(self.updateMapDimensions)
+        self.map.mapLayerSwitched.connect(self.mapLayerSwitched)
         self.layerWidth = map.getWidth()*72
         self.layerHeight = map.getHeight()*72
         # self.currentNodeLayer = NodeLayer(width, height)
@@ -91,6 +93,7 @@ class NodeEditor(QWidget):
             Qt.Key_X | Qt.ShiftModifier: (self.deleteItems, True),
             # Toggle
             Qt.Key_T: (self.toggleView,),
+            Qt.Key_L: (self.toggleFull,),
         }
 
     def setMap(self, map):
@@ -98,6 +101,7 @@ class NodeEditor(QWidget):
         self.map.selectionUpdated.connect(self.mapSelectionUpdated)
         self.map.displayItemValuesUpdated.connect(self.repaint)
         self.map.mapResized.connect(self.updateMapDimensions)
+        self.map.mapLayerSwitched.connect(self.repaint)
         self.mapSelectionUpdated()
         self.updateMapDimensions()
 
@@ -110,6 +114,9 @@ class NodeEditor(QWidget):
 
     def toggleView(self):
         self.showDebug = not self.showDebug
+
+    def toggleFull(self):
+        self.showFullMap = not self.showFullMap
 
     def resizeEditField(self, newWidth, newHeight, xOff=0, yOff=0):
         self.setFixedWidth(newWidth)
@@ -137,6 +144,11 @@ class NodeEditor(QWidget):
     # //////////// #
     # INTERACTIONS #
     # //////////// #
+
+    def mapLayerSwitched(self):
+        self.selectedItems = []
+        self.updateMedianPoint()
+        self.repaint()
 
     def mapSelectionUpdated(self):
         self.selectedItems = self.map.getSelectedItems()
@@ -180,10 +192,13 @@ class NodeEditor(QWidget):
 
     # form a new line or shape from the existing selected items
     def formItem(self):
+        # print("Start form")
         if self.interactMode == NodeEditor.INTERACT_SELECT:
+            # print("Forming Item")
             # shape is too complex; save logic for later
             if self.selectedType != NodeLayer.TYPE_SHAPE:
                 nodes = EMFNodeHelper.listOfNodes(self.selectedItems)
+                print(len(nodes))
                 if (len(nodes) == 2 and
                         len(EMFNodeHelper.existingLine(
                         nodes[0], nodes[1])) == 0):
@@ -515,9 +530,6 @@ class NodeEditor(QWidget):
                 self.cancelInteraction()
         self.repaint()
 
-    # def mouseReleaseEvent(self, event):
-    #     pass
-
     def mouseMoveEvent(self, event):
         pos = event.pos()
         self.currentMousePos = EMFNode(pos.x(), pos.y())
@@ -552,10 +564,11 @@ class NodeEditor(QWidget):
         painter.setPen(Qt.white)
         painter.drawRect(0, 0, self.layerWidth, self.layerHeight)
         # draw the list
-        diList = self.map.getDisplayItems()
-        if diList is not None:
-            diImg = self.map.getCurrentLayer().redrawLayerImage(diList)
-            painter.drawImage(0, 0, diImg)
+        layerImages = self.map.getLayerImages()
+        layersToDraw = (self.map.getNumLayers() if self.showFullMap else
+                        self.map.getCurrentLayerIndex()+1)
+        for i in range(layersToDraw):
+            painter.drawImage(0, 0, layerImages[i])
         if self.showDebug:
             painter.setOpacity(.3)
             painter.setPen(Qt.black)

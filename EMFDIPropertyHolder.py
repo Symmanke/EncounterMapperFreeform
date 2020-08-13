@@ -26,6 +26,10 @@ class DIPropertyHolder(QObject):
 
     def __init__(self):
         self.diProperties = {}
+        self.parentLayer = None
+
+    def setParentLayer(self, layer):
+        self.parentLayer = layer
 
     def currentDIs(self):
         return list(self.diProperties.keys())
@@ -40,20 +44,29 @@ class DIPropertyHolder(QObject):
                 for attrStr in diAttr:
                     attrValues[attrStr] = diAttr[attrStr].getValue()
             self.diProperties[di] = attrValues
+            if self.parentLayer is not None:
+                self.parentLayer.setNeedRedraw()
+
+    def sharedAttributeUpdated(self):
+        self.parentLayer.setNeedRedraw()
 
     def updateAttribute(self, di, attr):
         if di in self.diProperties:
             self.diProperties[di][attr.getName()] = attr.getValue()
+            if self.parentLayer is not None:
+                self.parentLayer.setNeedRedraw()
 
     def removeAllDIs(self):
         for di in self.diProperties:
             di.removeItem(self)
         self.diProperties.clear()
+        self.parentLayer.setNeedRedraw()
 
     def removeDI(self, di):
         if di in self.diProperties:
             di.removeItem(self)
             self.diProperties.pop(di)
+            self.parentLayer.setNeedRedraw()
 
     def diValues(self, di):
         values = None
