@@ -65,11 +65,13 @@ class EMFMap(QObject):
         # Do things to populate those items
         for dijs in jsContents["DisplayItems"]:
             displayItems.append(DisplayItemPicker.diFromJSON(dijs))
+        width = jsContents["Width"] * 72
+        height = jsContents["Height"] * 72
         layers = []
         for layerContent in jsContents["Layers"]:
             layers.append(NodeLayer.createFromJSON(
                 layerContent, displayItems,
-                jsContents["Width"], jsContents["Height"]))
+                width, height))
 
         return cls(jsContents["Width"], jsContents["Height"],
                    layers, displayItems, jsContents["CurrentLayer"],

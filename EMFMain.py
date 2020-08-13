@@ -23,12 +23,13 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QApplication, QWidget, QDialog,
                              QSplitter, QFileDialog,
                              QVBoxLayout, QScrollArea)
-from PyQt5.QtGui import QPalette, QPainter, QPixmap
+from PyQt5.QtGui import QPalette
 
 from EMFDisplayItemsSidebar import DisplayItemSidebar
 from EMFNodeEditor import NodeEditor
 from EMFMap import EMFMap
 from EMFMapResizeDialog import MapResizeDialog
+from EMFExportDialog import ExportDialog
 
 import json
 
@@ -54,10 +55,13 @@ class EMFMain(QWidget):
         self.resizeDialog = None
         self.resizeEditor = None
 
+        self.exportDialog = None
+        self.exportEditor = None
+
         self.keyBindings = {
             Qt.Key_E | Qt.ControlModifier: (self.exportEncounterMap,),
-            Qt.Key_E | int(Qt.ControlModifier | Qt.ShiftModifier):
-                (self.exportEncounterMap, False),
+            # Qt.Key_E | int(Qt.ControlModifier | Qt.ShiftModifier):
+            #     (self.exportEncounterMap, False),
             Qt.Key_S | Qt.ControlModifier: (self.saveEncounter,),
             # Qt.Key_S | int(Qt.ControlModifier | Qt.ShiftModifier):
             # (self.saveAsEncounter,),
@@ -101,26 +105,44 @@ class EMFMain(QWidget):
         self.resizeDialog.exec_()
 
     def exportEncounterMap(self, singleLayer=True):
-        filePath = QFileDialog.getSaveFileName(self, "Open Encounter",
-                                               "", "Image (*.png)")
-        print("exporting map at: {}".format(filePath))
-        if filePath is not None:
-            fp = filePath[0]
-            if fp.endswith(".png"):
-                fp = fp[:-4]
-            mapImages = self.map.getLayerImages()
-            print("retrieved {} map Images".format(len(mapImages)))
-            if singleLayer:
-                img = QPixmap(mapImages[0].width(), mapImages[0].height())
-                painter = QPainter(img)
-                for i in range(len(mapImages)):
-                    painter.drawImage(0, 0, mapImages[i])
-                painter.end()
-                img.save(fp+".png", "PNG")
-            else:
-                for i in range(len(mapImages)):
-                    mapImages[i].save(fp+"_L{}.png".format(i), "PNG")
-                    print("Exported Encounter Map!!!")
+        def endExport():
+            self.exportDialog.close()
+            self.exportDialog = None
+            self.exportEditor = None
+
+        def applyExport():
+            endExport()
+
+        self.exportDialog = QDialog()
+        layout = QVBoxLayout()
+
+        self.exportEditor = ExportDialog(self.map)
+        self.exportEditor.acceptedAction.connect(applyExport)
+        self.exportEditor.cancelledAction.connect(endExport)
+
+        layout.addWidget(self.exportEditor)
+        self.exportDialog.setLayout(layout)
+        self.exportDialog.exec_()
+        # filePath = QFileDialog.getSaveFileName(self, "Open Encounter",
+        #                                        "", "Image (*.png)")
+        # print("exporting map at: {}".format(filePath))
+        # if filePath is not None:
+        #     fp = filePath[0]
+        #     if fp.endswith(".png"):
+        #         fp = fp[:-4]
+        #     mapImages = self.map.getLayerImages()
+        #     print("retrieved {} map Images".format(len(mapImages)))
+        #     if singleLayer:
+        #         img = QPixmap(mapImages[0].width(), mapImages[0].height())
+        #         painter = QPainter(img)
+        #         for i in range(len(mapImages)):
+        #             painter.drawImage(0, 0, mapImages[i])
+        #         painter.end()
+        #         img.save(fp+".png", "PNG")
+        #     else:
+        #         for i in range(len(mapImages)):
+        #             mapImages[i].save(fp+"_L{}.png".format(i), "PNG")
+        #             print("Exported Encounter Map!!!")
 
     def saveEncounter(self):
         filePath = QFileDialog.getSaveFileName(
