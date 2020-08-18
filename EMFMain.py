@@ -60,8 +60,6 @@ class EMFMain(QWidget):
 
         self.keyBindings = {
             Qt.Key_E | Qt.ControlModifier: (self.exportEncounterMap,),
-            # Qt.Key_E | int(Qt.ControlModifier | Qt.ShiftModifier):
-            #     (self.exportEncounterMap, False),
             Qt.Key_S | Qt.ControlModifier: (self.saveEncounter,),
             # Qt.Key_S | int(Qt.ControlModifier | Qt.ShiftModifier):
             # (self.saveAsEncounter,),

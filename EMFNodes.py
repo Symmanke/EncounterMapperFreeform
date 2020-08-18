@@ -28,6 +28,19 @@ import math
 from EMFDIPropertyHolder import DIPropertyHolder
 
 
+"""
+The NodeLayer contains a collection of Nodes, Shapes, and Lines. Unlike a
+DisplayItemProperty, these elements are unique to the NodeLayer.
+
+NodeLayers also contain functionality to create an image based off the
+given DisplayItemProperties. It keeps track of when properties have been
+altered for elements on its level, or node positions have changed. Use
+NeedsRedraw() to check if the layer needs to be redrawn, or setNeedRedraw()
+to force the redraw of the image. Otherwise, the image is cached until no
+longer viable.
+"""
+
+
 class NodeLayer(DIPropertyHolder):
     TYPE_NODE = "NODE"
     TYPE_LINE = "LINE"
@@ -39,6 +52,7 @@ class NodeLayer(DIPropertyHolder):
         lines = [] if lines is None else lines
         shapes = [] if shapes is None else shapes
 
+        # Add existing elements to the parent layer for setNeedsRedraw()
         def setPL(items):
             for item in items:
                 item.setParentLayer(self)
@@ -58,6 +72,8 @@ class NodeLayer(DIPropertyHolder):
         self.needsRedraw = True
         self.parentLayer = self
 
+    # Used when loading a saved map. Creates the nodes, shapes, and lines, then
+    # adds them to the Layer,
     @classmethod
     def createFromJSON(cls, jsContents, displayItems, width, height):
         nodes = []
@@ -77,6 +93,7 @@ class NodeLayer(DIPropertyHolder):
                 layer, jsContents["DIProperties"][dIndex])
         return layer
 
+    # Check if a nodeLayer element exists in this layer
     def containsItem(self, item):
         itemType = None
         if isinstance(item, EMFNode):
@@ -89,6 +106,7 @@ class NodeLayer(DIPropertyHolder):
             return item is self
         return item in self.layerItems[itemType]
 
+    # Adds a layer element to this layer if the element isn't already inside.
     def addItemToLayer(self, type, item):
         typeList = self.layerItems[type]
         if item not in typeList:
@@ -97,28 +115,31 @@ class NodeLayer(DIPropertyHolder):
             if type == NodeLayer.TYPE_SHAPE:
                 self.addItemsToLayer(NodeLayer.TYPE_LINE, item.lines())
 
+    # Add multiple items of the same type to this layer. Checks for Duplicates
     def addItemsToLayer(self, type, items, careful=False):
         for item in items:
             self.addItemToLayer(type, item)
 
+    # Removes item from layer if it is in this layer
     def removeFromLayer(self, type, item):
         if item in self.layerItems[type]:
             self.layerItems[type].remove(item)
             item.setParentLayer(None)
 
+    # get the layer elements of a specific type
     def getList(self, type):
         return self.layerItems[type]
 
+    # Get the pixel dimensions of this layer. Equivalent to map dimensions * 72
     def getDimensions(self):
         return (self.layerWidth, self.layerHeight)
 
+    # Sets the pixel dimensions of the layers. xOff and yOff  will offset
+    # all nodes.
     def setLayerDimensions(self, width, height, xOff, yOff):
         self.layerWidth = width
         self.layerHeight = height
-        # print(self.layerItems[NodeLayer.TYPE_NODE])
         for node in self.layerItems[NodeLayer.TYPE_NODE]:
-            # print("{}, {}, {}, {}".format(node,
-            #                               node.x(), node.y(), node.offset))
             node.offset(xOff, yOff)
         self.needsRedraw = True
 
@@ -139,8 +160,7 @@ class NodeLayer(DIPropertyHolder):
                                  QImage.Format_ARGB32)
         self.layerImage.fill(QColor(0, 0, 0, 0))
         imgPainter = QPainter(self.layerImage)
-        # imgPainter.begin()
-        # Draw onto image
+        # draw in reverse order to keep the order correct
         for di in reversed(dis):
             di.drawDisplay(imgPainter, self)
         imgPainter.end()
@@ -174,6 +194,13 @@ class NodeLayer(DIPropertyHolder):
         }
 
 
+"""
+EMFNode is a point on the map. It is the basic element of any map.
+Any properties that are only using a point (such as a circle, image) attach
+to the EMFNode
+"""
+
+
 class EMFNode(DIPropertyHolder):
     def __init__(self, x, y):
         super(EMFNode, self).__init__()
@@ -194,10 +221,13 @@ class EMFNode(DIPropertyHolder):
             dis[int(dIndex)].addItem(node, jsContents["DIProperties"][dIndex])
         return node
 
+    # Use when duplicating nodes
     @classmethod
     def createFromNode(cls, node):
         return EMFNode(node.x(), node.y())
 
+    # Use when beginning to perform a transform operation on the node (grab,
+    # rotate, scale). Sets up temporary points for calculating the operations
     def beginTransform(self, median):
         if not self.transforming:
             self.transforming = True
@@ -209,23 +239,28 @@ class EMFNode(DIPropertyHolder):
             self.tempX = self.nPoint.x()
             self.tempY = self.nPoint.y()
 
+    # Cancel transform, setting node positions back to their original positions
     def cancelTransform(self):
         self.transforming = False
         self.nPoint.setX(self.tempX)
         self.nPoint.setY(self.tempY)
 
+    # Apply the selected transform
     def applyTransform(self):
         self.transforming = False
 
+    # Transform method. Move the point from the offset.
     def grab(self, offset):
         self.nPoint.setX(self.tempX + offset[0])
         self.nPoint.setY(self.tempY + offset[1])
         self.parentLayer.setNeedRedraw()
 
+    # Perform an offset shift. Does not happen as part of a transform
     def offset(self, xOff, yOff):
         self.nPoint.setX(self.nPoint.x() + xOff)
         self.nPoint.setY(self.nPoint.y() + yOff)
 
+    # Transform method. Rotate by deltaAngle (degrees) around the median angle.
     def rotate(self, deltaAngle):
         angle = math.radians(self.transformComparison[2] + deltaAngle)
         self.nPoint.setX(self.transformComparison[0].x() +
@@ -234,6 +269,7 @@ class EMFNode(DIPropertyHolder):
                          self.transformComparison[3] * math.sin(angle))
         self.parentLayer.setNeedRedraw()
 
+    # Transform method. scale according to distance from the median point.
     def scale(self, size):
         self.nPoint.setX(self.transformComparison[0].x() +
                          self.offsetNode.x()*size)
@@ -250,6 +286,7 @@ class EMFNode(DIPropertyHolder):
     def point(self):
         return self.nPoint
 
+    # Add a line to the Node
     def addLine(self, line):
         self.lines.append(line)
 
@@ -259,6 +296,7 @@ class EMFNode(DIPropertyHolder):
     def getShapes(self):
         return self.shapes
 
+    # grab a set of nodes connected to this nodes via lines
     def connectedNodes(self):
         nodeSet = set()
         for line in self.lines:
@@ -267,6 +305,7 @@ class EMFNode(DIPropertyHolder):
             nodeSet.remove(self)
         return nodeSet
 
+    # Add a shape to the Node
     def addShape(self, shape):
         self.shapes.append(shape)
 
@@ -278,6 +317,7 @@ class EMFNode(DIPropertyHolder):
         if shape in self.shapes:
             self.shapes.remove(shape)
 
+    # Check if this node is in range of the selected point
     def inSelectRange(self, point, threshold=100):
         return EMFNodeHelper.nodeDistanceSqr(point, self) <= threshold
 
@@ -291,6 +331,11 @@ class EMFNode(DIPropertyHolder):
             "Y": self.nPoint.y(),
             "DIProperties": indiv
         }
+
+
+"""
+EMFLine is a line between EMFNodes.
+"""
 
 
 class EMFLine(DIPropertyHolder):
@@ -353,6 +398,12 @@ class EMFLine(DIPropertyHolder):
             "nodes": ni,
             "DIProperties": indiv
         }
+
+
+"""
+EMFShape is a Shape between three or more nodes. In between each adjacent node
+in the list are lines. When created, a shape will generate any missing lines.
+"""
 
 
 class EMFShape(DIPropertyHolder):
