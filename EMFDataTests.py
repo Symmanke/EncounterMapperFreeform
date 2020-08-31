@@ -179,6 +179,7 @@ class EMFNodeTests(unittest.TestCase):
                 self.assertEqual(comp[2], nodeCompList[i][0])
                 self.assertEqual(comp[3], nodeCompList[i][1])
 
+    # test the range for clicking the node
     def test_nodeInSelectRange(self):
         node = EMFNode(10, 10)
 
@@ -197,6 +198,218 @@ class EMFNodeTests(unittest.TestCase):
                 self.assertEqual(
                     node.inSelectRange(
                         clickingPoints[i][0]), clickingPoints[i][1])
+
+    # test the movement of the transform for things
+    def test_nodeGrabTransform(self):
+        # node = EMFNode(10, 10)
+
+        grabTransforms = [
+            (EMFNode(10, 10), (10, 10)),
+            (EMFNode(10, 10), (-10, -10)),
+            (EMFNode(0, 0), (10, 10)),
+            (EMFNode(0, 0), (-10, -10)),
+            (EMFNode(0, 0), (0, 0))
+        ]
+
+        finalPoints = [
+            (20, 20),
+            (0, 0),
+            (20, 20),
+            (0, 0),
+            (10, 10)
+
+        ]
+
+        for i in range(len(grabTransforms)):
+            with self.subTest(i=i):
+                testNode = EMFNode(10, 10)
+
+                # Handle the transform
+                testNode.beginTransform(grabTransforms[i][0])
+                testNode.grab(grabTransforms[i][1])
+                testNode.applyTransform()
+
+                self.assertEqual(
+                    testNode.x(), finalPoints[i][0])
+                self.assertEqual(
+                    testNode.y(), finalPoints[i][1])
+
+    # test the cancelling of grab transformations
+    def test_nodeGrabCancelTransform(self):
+        # node = EMFNode(10, 10)
+
+        grabTransforms = [
+            (EMFNode(10, 10), (10, 10)),
+            (EMFNode(10, 10), (-10, -10)),
+            (EMFNode(0, 0), (10, 10)),
+            (EMFNode(0, 0), (-10, -10)),
+        ]
+
+        for i in range(len(grabTransforms)):
+            with self.subTest(i=i):
+                testNode = EMFNode(10, 10)
+
+                # Handle the transform
+                testNode.beginTransform(grabTransforms[i][0])
+                testNode.grab(grabTransforms[i][1])
+                testNode.cancelTransform()
+
+                self.assertEqual(
+                    testNode.x(), 10)
+                self.assertEqual(
+                    testNode.y(), 10)
+
+    # test the movement of the transform for things
+    def test_nodeRotateTransform(self):
+        # node = EMFNode(10, 10)
+
+        rotateTransforms = [
+            (EMFNode(10, 10), 0),
+            (EMFNode(10, 10), 90),
+            (EMFNode(10, 10), 180),
+            (EMFNode(10, 10), 270),
+            (EMFNode(20, 10), 0),
+            (EMFNode(20, 10), 90),
+            (EMFNode(20, 10), 180),
+            (EMFNode(20, 10), 270),
+        ]
+
+        finalPoints = [
+            (10, 10),
+            (10, 10),
+            (10, 10),
+            (10, 10),
+            (20, 0),
+            (30, 10),
+            (20, 20),
+            (10, 10),
+        ]
+
+        for i in range(len(rotateTransforms)):
+            with self.subTest(i=i):
+                testNode = EMFNode(10, 10)
+
+                # Handle the transform
+                testNode.beginTransform(rotateTransforms[i][0])
+                testNode.rotate(rotateTransforms[i][1])
+                testNode.applyTransform()
+
+                self.assertEqual(
+                    testNode.x(), finalPoints[i][0])
+                self.assertEqual(
+                    testNode.y(), finalPoints[i][1])
+
+    # test the cancelling of grab transformations
+    def test_nodeRotateCancelTransform(self):
+        # node = EMFNode(10, 10)
+
+        rotateTransforms = [
+            (EMFNode(10, 10), 0),
+            (EMFNode(10, 10), 90),
+            (EMFNode(10, 10), 180),
+            (EMFNode(10, 10), 270),
+            (EMFNode(20, 10), 0),
+            (EMFNode(20, 10), 90),
+            (EMFNode(20, 10), 180),
+            (EMFNode(20, 10), 270),
+        ]
+
+        for i in range(len(rotateTransforms)):
+            with self.subTest(i=i):
+                testNode = EMFNode(10, 10)
+
+                # Handle the transform
+                testNode.beginTransform(rotateTransforms[i][0])
+                testNode.rotate(rotateTransforms[i][1])
+                testNode.cancelTransform()
+
+                self.assertEqual(
+                    testNode.x(), 10)
+                self.assertEqual(
+                    testNode.y(), 10)
+
+    # test the movement of the transform for things
+    def test_nodeScaleTransform(self):
+        # node = EMFNode(10, 10)
+
+        rotateTransforms = [
+            (EMFNode(10, 10), 0),
+            (EMFNode(10, 10), 0.5),
+            (EMFNode(10, 10), 1),
+            (EMFNode(10, 10), 2),
+            (EMFNode(20, 10), 0),
+            (EMFNode(20, 10), 0.5),
+            (EMFNode(20, 10), 1),
+            (EMFNode(20, 10), 2),
+            (EMFNode(10, 0), 0),
+            (EMFNode(10, 0), 0.5),
+            (EMFNode(10, 0), 1),
+            (EMFNode(10, 0), 2),
+
+        ]
+
+        finalPoints = [
+            (10, 10),
+            (10, 10),
+            (10, 10),
+            (10, 10),
+            (20, 10),
+            (15, 10),
+            (10, 10),
+            (0, 10),
+            (10, 0),
+            (10, 5),
+            (10, 10),
+            (10, 20),
+
+        ]
+
+        for i in range(len(rotateTransforms)):
+            with self.subTest(i=i):
+                testNode = EMFNode(10, 10)
+
+                # Handle the transform
+                testNode.beginTransform(rotateTransforms[i][0])
+                testNode.scale(rotateTransforms[i][1])
+                testNode.applyTransform()
+
+                self.assertEqual(
+                    testNode.x(), finalPoints[i][0])
+                self.assertEqual(
+                    testNode.y(), finalPoints[i][1])
+
+    # test the cancelling of grab transformations
+    def test_nodeScaleCancelTransform(self):
+        # node = EMFNode(10, 10)
+
+        rotateTransforms = [
+            (EMFNode(10, 10), 0),
+            (EMFNode(10, 10), 90),
+            (EMFNode(10, 10), 180),
+            (EMFNode(10, 10), 270),
+            (EMFNode(20, 10), 0),
+            (EMFNode(20, 10), 90),
+            (EMFNode(20, 10), 180),
+            (EMFNode(20, 10), 270),
+        ]
+
+        for i in range(len(rotateTransforms)):
+            with self.subTest(i=i):
+                testNode = EMFNode(10, 10)
+
+                # Handle the transform
+                testNode.beginTransform(rotateTransforms[i][0])
+                testNode.scale(rotateTransforms[i][1])
+                testNode.cancelTransform()
+
+                self.assertEqual(
+                    testNode.x(), 10)
+                self.assertEqual(
+                    testNode.y(), 10)
+
+
+class EMFLineTests(unittest.TestCase):
+    pass
 
 
 if __name__ == '__main__':

@@ -253,29 +253,36 @@ class EMFNode(DIPropertyHolder):
     def grab(self, offset):
         self.nPoint.setX(self.tempX + offset[0])
         self.nPoint.setY(self.tempY + offset[1])
-        self.parentLayer.setNeedRedraw()
+        if self.parentLayer is not None:
+            self.parentLayer.setNeedRedraw()
 
     # Perform an offset shift. Does not happen as part of a transform
     def offset(self, xOff, yOff):
-        self.nPoint.setX(self.nPoint.x() + xOff)
-        self.nPoint.setY(self.nPoint.y() + yOff)
+        self.nPoint.setX(int(round(self.nPoint.x() + xOff)))
+        self.nPoint.setY(int(round(self.nPoint.y() + yOff)))
 
     # Transform method. Rotate by deltaAngle (degrees) around the median angle.
     def rotate(self, deltaAngle):
         angle = math.radians(self.transformComparison[2] + deltaAngle)
-        self.nPoint.setX(self.transformComparison[0].x() +
-                         self.transformComparison[3] * math.cos(angle))
-        self.nPoint.setY(self.transformComparison[0].y() +
-                         self.transformComparison[3] * math.sin(angle))
-        self.parentLayer.setNeedRedraw()
-
+        self.nPoint.setX(
+            int(round(self.transformComparison[0].x() +
+                      self.transformComparison[3] * math.cos(angle))))
+        self.nPoint.setY(
+            int(round(self.transformComparison[0].y() +
+                      self.transformComparison[3] * math.sin(angle))))
+        if self.parentLayer is not None:
+            self.parentLayer.setNeedRedraw()
     # Transform method. scale according to distance from the median point.
+
     def scale(self, size):
-        self.nPoint.setX(self.transformComparison[0].x() +
-                         self.offsetNode.x()*size)
-        self.nPoint.setY(self.transformComparison[0].y() +
-                         self.offsetNode.y()*size)
-        self.parentLayer.setNeedRedraw()
+        self.nPoint.setX(
+            int(round(self.transformComparison[0].x() +
+                      self.offsetNode.x()*size)))
+        self.nPoint.setY(
+            int(round(self.transformComparison[0].y() +
+                      self.offsetNode.y()*size)))
+        if self.parentLayer is not None:
+            self.parentLayer.setNeedRedraw()
 
     def x(self):
         return self.nPoint.x()
