@@ -23,6 +23,11 @@ from PyQt5.QtWidgets import (QLabel, QSpinBox,
                              QGridLayout)
 from EMFEditAction import EditAction
 
+"""
+The MapResizeDialog gives the current size of the map in 72px (1 in.) Squares,
+and allows the user to resize/offset the given map by the number of squares.
+"""
+
 
 class MapResizeDialog(EditAction):
 

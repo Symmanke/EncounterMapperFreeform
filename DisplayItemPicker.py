@@ -31,6 +31,12 @@ from EMFLineDisplayItems import (ImageLineDisplay,
 from EMFShapeDisplayItems import ColorShapeDisplay, ImageShapeDisplay
 from EMFSpecialDisplay import ColorBGDisplay, ImageBGDisplay, GridDisplay
 
+"""
+The DisplayItemPicker is brought up whenever one is trying to create a new
+DisplayItem. This dialog contains a list of possible displayItems as well
+as a text input for a name.
+"""
+
 
 class DisplayItemPicker(EditAction):
     DIClasses = {

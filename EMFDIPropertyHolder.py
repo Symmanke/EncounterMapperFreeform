@@ -20,6 +20,14 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 from PyQt5.QtCore import pyqtSignal, QObject
 
+"""
+DIPropertyHolder is the base class for any object that can be joined to a
+DisplayItem. Its children are EMFNode, EMFLine, EMFShape, and NodeLayer. The
+class contains functionality to add DisplayItems to a list, store and update
+values for the individual attributes, and update the parent layer when a
+value has been updated to allow the layer to be redrawn.
+"""
+
 
 class DIPropertyHolder(QObject):
     propertyUpdated = pyqtSignal()

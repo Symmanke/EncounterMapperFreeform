@@ -26,6 +26,13 @@ from PyQt5.QtGui import QPalette, QPixmap
 
 from EMFColorPicker import ColorPicker
 
+"""
+An EMFAttribute is a single variable for a DisplayItem. The base class contains
+enough information to store the value, as well as a JSON value representation.
+Each attribute has a corresponding EMFAttributeWidget, which enables users to
+update the variables used.
+"""
+
 
 class EMFAttribute:
     def __init__(self, parentDI, name, widgetClass, widgetParams,
@@ -59,13 +66,13 @@ class EMFAttribute:
     def widgetParams(self):
         return self.widgetParams
 
-    # def jsonObj(self):
-    #     return {
-    #         "name": self.name,
-    #         "value": self.jsonValue,
-    #     }
 
-# Base for the attribute widget.
+"""
+The EMFAttributeWidget base class contains the base capabilities needed to
+update an EMFAttribute. Each subclass contains the necessary widgets to update
+the given value. Users should either use a subclass, or create a new one if
+none of the existing subclasses are appropriate for the use case.
+"""
 
 
 class EMFAttributeWidget(QWidget):
@@ -77,6 +84,12 @@ class EMFAttributeWidget(QWidget):
 
     def updateValues(self, value, jsonValue):
         self.attribute.setValues(value, jsonValue)
+
+
+"""
+ScrollbarAttributeWidget contains a scrollbar used to update an integer value.
+The min, max, and starting value can be set at initilization
+"""
 
 
 class ScrollbarAttributeWidget(EMFAttributeWidget):
@@ -100,6 +113,12 @@ class ScrollbarAttributeWidget(EMFAttributeWidget):
         self.updateValues(value, value)
 
 
+"""
+SpinboxAttributeWidget contains a spinbox used to update an integer value.
+The min, max, and starting value can be set at initilization
+"""
+
+
 class SpinboxAttributeWidget(EMFAttributeWidget):
     def __init__(self, attr, params):
         super(SpinboxAttributeWidget, self).__init__(attr, params)
@@ -114,6 +133,12 @@ class SpinboxAttributeWidget(EMFAttributeWidget):
         self.setLayout(layout)
 
 
+"""
+The CheckBoxAttributeWidget can set a boolean checkbox for a value. The
+starting value is set at initilization.
+"""
+
+
 class CheckBoxAttributeWidget(EMFAttributeWidget):
     def __init__(self, attr, params):
         super(CheckBoxAttributeWidget, self).__init__(attr, params)
@@ -126,6 +151,11 @@ class CheckBoxAttributeWidget(EMFAttributeWidget):
         layout = QHBoxLayout()
         layout.addWidget(self.check)
         self.setLayout(layout)
+
+
+"""
+FilePickerAttributeWidget chooses a filePath for an image.
+"""
 
 
 class FilePickerAttributeWidget(EMFAttributeWidget):
@@ -155,6 +185,11 @@ class FilePickerAttributeWidget(EMFAttributeWidget):
             self.fileLabel.setText(pathName)
             img = QPixmap(pathToOpen[0])
             self.updateValues(img, pathToOpen[0])
+
+
+"""
+The ColorAttributeWidget allows a color picker editor to display. 
+"""
 
 
 class ColorAttributeWidget(EMFAttributeWidget):

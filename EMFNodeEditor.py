@@ -28,6 +28,12 @@ import math
 from EMFNodes import NodeLayer, EMFNode, EMFShape, EMFLine, EMFNodeHelper
 from EMFMap import EMFMap
 
+"""
+The NodeEditor is a piece of work that allows the user to interact with the
+EMFMap's current layer. It contains methods to transform the given nodes,
+lines, and shapes. It also displays the NodeLayer's images.
+"""
+
 
 class NodeEditor(QWidget):
     INTERACT_SELECT = "SELECT"

@@ -20,11 +20,12 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 import unittest
 
-from EMFNodes import EMFNodeHelper, EMFNode
+from EMFNodes import EMFNodeHelper, EMFNode, EMFLine, EMFShape, NodeLayer
 
 
 """
-EMFNodeTests is used for tests specifically with nodes, no properties.
+EMFNodeTests tests the builtin functions of EMFNodes. A bit redundant,
+but pretty straightforward.
 """
 
 
@@ -199,7 +200,7 @@ class EMFNodeTests(unittest.TestCase):
                     node.inSelectRange(
                         clickingPoints[i][0]), clickingPoints[i][1])
 
-    # test the movement of the transform for things
+    # test the application of the grab transformation
     def test_nodeGrabTransform(self):
         # node = EMFNode(10, 10)
 
@@ -259,7 +260,7 @@ class EMFNodeTests(unittest.TestCase):
                 self.assertEqual(
                     testNode.y(), 10)
 
-    # test the movement of the transform for things
+    # test the application of the rotate transformation
     def test_nodeRotateTransform(self):
         # node = EMFNode(10, 10)
 
@@ -299,7 +300,7 @@ class EMFNodeTests(unittest.TestCase):
                 self.assertEqual(
                     testNode.y(), finalPoints[i][1])
 
-    # test the cancelling of grab transformations
+    # test the cancelling of rotate transformations
     def test_nodeRotateCancelTransform(self):
         # node = EMFNode(10, 10)
 
@@ -328,7 +329,7 @@ class EMFNodeTests(unittest.TestCase):
                 self.assertEqual(
                     testNode.y(), 10)
 
-    # test the movement of the transform for things
+    # test the application of the scale transformation
     def test_nodeScaleTransform(self):
         # node = EMFNode(10, 10)
 
@@ -378,7 +379,7 @@ class EMFNodeTests(unittest.TestCase):
                 self.assertEqual(
                     testNode.y(), finalPoints[i][1])
 
-    # test the cancelling of grab transformations
+    # test the cancelling of scale transformations
     def test_nodeScaleCancelTransform(self):
         # node = EMFNode(10, 10)
 
@@ -408,8 +409,112 @@ class EMFNodeTests(unittest.TestCase):
                     testNode.y(), 10)
 
 
+"""
+EMFLineTests tests the builtin functions of EMFLines as well as their
+interactions with EMFNodes.
+"""
+
+
 class EMFLineTests(unittest.TestCase):
-    pass
+
+    # test creating a JSON object from an EMFLine for the sake of saving
+    def test_lineToJSON(self):
+        nodes = [EMFNode(0, 0), EMFNode(10, 10)]
+        nodeList = {nodes[0]: 0, nodes[1]: 1}
+        line = EMFLine(nodes[0], nodes[1])
+        self.assertEqual(line.jsonObj(nodeList, {}),
+                         {'DIProperties': {}, 'nodes': [0, 1]})
+
+    # test the functionaility of loading an EMFLine from a JSON object
+    def test_JSONToLine(self):
+        nodes = [EMFNode(0, 0), EMFNode(10, 10)]
+        nodeList = {nodes[0]: 0, nodes[1]: 1}
+        lineJSON = {'DIProperties': {}, 'nodes': [0, 1]}
+
+        line = EMFLine.createFromJSON(lineJSON, nodes, [])
+        self.assertEqual(line.jsonObj(nodeList, {}), lineJSON)
+
+
+"""
+EMFSapeTests tests the builtin functions of EMFShapes, as well as the
+relationship between shapes, lines, and nodes
+"""
+
+
+class EMFShapeTests(unittest.TestCase):
+    # test creating a JSON object from an EMFShape for the sake of saving
+    def test_shapeToJSON(self):
+        nodes = [EMFNode(0, 0), EMFNode(10, 10), EMFNode(0, 10)]
+        nodeList = {nodes[0]: 0, nodes[1]: 1, nodes[2]: 2}
+        shape = EMFShape(nodes)
+        self.assertEqual(shape.jsonObj(nodeList, {}),
+                         {'DIProperties': {}, 'nodes': [1, 2, 0]})
+
+    # test the functionaility of loading an EMFShape from a JSON object
+    def test_JSONToShape(self):
+        nodes = [EMFNode(0, 0), EMFNode(10, 10), EMFNode(0, 10)]
+        nodeList = {nodes[0]: 0, nodes[1]: 1, nodes[2]: 2}
+        shapeJSON = {'DIProperties': {}, 'nodes': [1, 2, 0]}
+
+        shape = EMFShape.createFromJSON(shapeJSON, nodes, [])
+        self.assertEqual(shape.jsonObj(nodeList, {}), shapeJSON)
+
+
+"""
+EMFNodeLayerTests tests the builtin functionality of interacting with nodes,
+lines, and shapes through the NodeLayer
+"""
+
+
+class EMFNodeLayerTests(unittest.TestCase):
+
+    # Helper method to create a nodeLayer given a series of inputs
+    def createNodeLayer(self, nl, lis, sis, ns=True):
+        lines = []
+        for li in lis:
+            lines.append(EMFLine(nl[li[0]], nl[li[1]]))
+        shapes = []
+        for si in sis:
+            sNodes = []
+            for i in si:
+                sNodes.append(nl[i])
+            shapes.append(EMFShape(sNodes, ns))
+        return NodeLayer(100, 100, nl, lines, shapes)
+
+    # test creating a JSON object from a NodeLayer for the sake of saving
+    def test_nodeLayerToJSON(self):
+        nl = self.createNodeLayer(
+            [EMFNode(0, 0), EMFNode(10, 0), EMFNode(10, 10), EMFNode(0, 10)],
+            [(3, 0), (0, 1), (1, 2), (2, 3)],
+            [(0, 1, 2, 3)])
+
+        self.assertEqual(nl.jsonObj({}),
+                         {'DIProperties': {},
+                          'Lines': [{'DIProperties': {}, 'nodes': [3, 0]},
+                                    {'DIProperties': {}, 'nodes': [0, 1]},
+                                    {'DIProperties': {}, 'nodes': [1, 2]},
+                                    {'DIProperties': {}, 'nodes': [2, 3]}],
+                          'Nodes': [{'DIProperties': {}, 'X': 0, 'Y': 0},
+                                    {'DIProperties': {}, 'X': 10, 'Y': 0},
+                                    {'DIProperties': {}, 'X': 10, 'Y': 10},
+                                    {'DIProperties': {}, 'X': 0, 'Y': 10}],
+                          'Shapes': [{'DIProperties': {}, 'nodes': [1, 2, 3, 0]
+                                      }]})
+
+    # test the functionaility of loading a NodeLayer from a JSON object
+    def test_JSONToNodeLayer(self):
+        nlJSON = {'DIProperties': {},
+                  'Lines': [{'DIProperties': {}, 'nodes': [3, 0]},
+                            {'DIProperties': {}, 'nodes': [0, 1]},
+                            {'DIProperties': {}, 'nodes': [1, 2]},
+                            {'DIProperties': {}, 'nodes': [2, 3]}],
+                  'Nodes': [{'DIProperties': {}, 'X': 0, 'Y': 0},
+                            {'DIProperties': {}, 'X': 10, 'Y': 0},
+                            {'DIProperties': {}, 'X': 10, 'Y': 10},
+                            {'DIProperties': {}, 'X': 0, 'Y': 10}],
+                  'Shapes': [{'DIProperties': {}, 'nodes': [1, 2, 3, 0]}]}
+        nl = NodeLayer.createFromJSON(nlJSON, {}, 100, 100)
+        self.assertEqual(nl.jsonObj({}), nlJSON)
 
 
 if __name__ == '__main__':

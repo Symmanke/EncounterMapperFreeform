@@ -2,6 +2,15 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QListWidget, QLabel, QListWidgetItem)
 from EMFDisplayProperty import EMFDisplayItemWidget
 
+"""
+The DisplayAttributeList is the list of all currently selected DisplayItems.
+These items can be from either the QListWidget holding all displayItems, or
+from the EMFMap's selected elements. The DisplayAttributeList grabs the
+DIs from the two areas and generates QWidgets holding the attribute details.
+These can be interacted with to update the shared and individual values of a
+given DI.
+"""
+
 
 class DisplayAttributeList(QListWidget):
     def __init__(self, map):

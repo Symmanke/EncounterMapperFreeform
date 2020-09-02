@@ -25,8 +25,12 @@ from PyQt5.QtGui import QPalette
 from EMFNodes import NodeLayer
 
 
-# Display the full set of attributes and their values if possible for an
-# EMFDisplayItem
+"""
+Display the full set of attributes and their values if possible for an
+EMFDisplayItem
+"""
+
+
 class EMFDisplayItemWidget(QFrame):
 
     def __init__(self, displayItem):
@@ -64,11 +68,15 @@ class EMFDisplayItemWidget(QFrame):
         pass
 
 
-# Display item for the grid. Can be added to a Line, Shape, or Node.
-# Contains methods for drawing both a simplified version while editing, as
-# well as a more complex version.
-# Each DisplayItem has attributes. Some attributes will be shared by all,
-# While
+"""
+Display item for the grid. Can be added to a Line, Shape, or Node.
+Contains methods for drawing both a simplified version while editing, as
+well as a more complex version.
+Each DisplayItem has attributes. Some attributes will be shared by all,
+While
+"""
+
+
 class EMFDisplayItem:
     def __init__(self, name, allowedClass):
         self.name = name

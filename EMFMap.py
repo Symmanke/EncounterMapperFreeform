@@ -24,6 +24,17 @@ from DisplayItemPicker import DisplayItemPicker
 from EMFNodes import NodeLayer, EMFNode, EMFLine, EMFShape
 import copy
 
+"""
+EMFMap contains all the necessary data for an encounter map. It has a series
+of NodeLayers, each with their own EMFNodes, EMFLines, and EMFShapes, as well
+as an array of DIProperties. EMFMap contains functionality to interact with
+each of these elements as well.
+
+EMFMap contains a variety of pyqtSignals that are fired off whenever a property
+is changed. These should be added to the EMFNodeEditor and
+ EMFDisplayItemsSidebar to make sure all elements are properly updating
+"""
+
 
 class EMFMap(QObject):
 
@@ -59,6 +70,7 @@ class EMFMap(QObject):
             di.setMap(self)
         self.selectedDI = selectedDI
 
+    # Load map from a json representation.
     @classmethod
     def createMapFromJSON(cls, jsContents):
         displayItems = []
@@ -114,6 +126,8 @@ class EMFMap(QObject):
         if emitSignal:
             self.selectionUpdated.emit()
 
+    # Given a DisplayItem, select the elements in the current layer
+    # that are part of the DI
     def selectItemsFromDI(self, di):
         newSelection = []
         listType = EMFMap.CLASS_TO_TYPE[di.getAllowedClass]
@@ -192,6 +206,7 @@ class EMFMap(QObject):
     # Display Item Management Methods #
     # /////////////////////////////// #
 
+    # Create a duplicate of the displayItem from an Original
     def copyDIAttributes(self, dupe, orig):
         for di in orig.currentDIs():
             di.addItem(dupe, copy.copy(orig.diValues(di)))
@@ -271,12 +286,6 @@ class EMFMap(QObject):
             if img is None or nl.NeedsRedraw():
                 img = nl.redrawLayerImage(self.displayItems)
             layerImgList.append(img)
-        # for i in range(len(self.nodeLayers)):
-        #     img = self.nodeLayers[i].getLayerImage()
-        #     if img is None or i == self.currentLayer:
-        #         # TODO: or self.nodeLayers[i].NeedsRedraw():
-        #         img = self.nodeLayers[i].redrawLayerImage(self.displayItems)
-        #     layerImgList.append(img)
         return layerImgList
 
     def jsonObj(self):

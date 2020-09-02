@@ -26,6 +26,12 @@ from PyQt5.QtWidgets import (QWidget, QSpinBox, QSlider,
 
 from EMFEditAction import EditAction
 
+"""
+The ColorPicker is an EditAction used to select a color via RGB and HSV
+sliders. Much of this class is generated from my work on the Original
+EncounterMapper.
+"""
+
 
 class ColorPicker(EditAction):
     def __init__(self, initialColor=None):

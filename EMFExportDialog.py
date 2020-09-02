@@ -26,6 +26,13 @@ from PyQt5.QtWidgets import (QLabel, QLineEdit, QPushButton, QRadioButton,
                              QGridLayout, QFileDialog)
 from EMFEditAction import EditAction
 
+"""
+The ExportDialog is used whenever one is exporting images from an EMFMap. It
+contains the options to specify which layers are put on which image, similar
+to a file printer dialog. It also contains the helper abilities to specify
+all layers on a single image, or all independently
+"""
+
 
 class ExportDialog(EditAction):
     SINGLE = "Single Image from Layers"

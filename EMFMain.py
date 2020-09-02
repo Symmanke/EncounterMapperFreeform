@@ -33,6 +33,11 @@ from EMFExportDialog import ExportDialog
 
 import json
 
+"""
+EMFMain is the parent widget of Encounter Mapper Freeform. It handles
+functionality for creating, saving, loading, and exporting encounter maps
+"""
+
 
 class EMFMain(QWidget):
     def __init__(self):
@@ -102,7 +107,8 @@ class EMFMain(QWidget):
         self.resizeDialog.setLayout(layout)
         self.resizeDialog.exec_()
 
-    def exportEncounterMap(self, singleLayer=True):
+    # Open the Export Dialog to export images of the encounter map
+    def exportEncounterMap(self):
         def endExport():
             self.exportDialog.close()
             self.exportDialog = None
@@ -123,6 +129,7 @@ class EMFMain(QWidget):
         self.exportDialog.setLayout(layout)
         self.exportDialog.exec_()
 
+    # Save a json representation of the current encounter map.
     def saveEncounter(self):
         filePath = QFileDialog.getSaveFileName(
             self, "Open Encounter", "", "Encounter Mapper Freeform (*.emf)")
@@ -135,6 +142,7 @@ class EMFMain(QWidget):
             f.write(text)
             f.close()
 
+    # Choose an .emf file from the filepicker dialog and load the json map
     def openEncounter(self):
         contentMap = None
         pathToOpen = QFileDialog.getOpenFileName(
@@ -156,6 +164,7 @@ class EMFMain(QWidget):
         if contentMap is not None:
             self.setMap(contentMap)
 
+    # swap the map that is currently in use from the editor.
     def setMap(self, map):
         self.map = map
         self.editor.setMap(map)

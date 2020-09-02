@@ -22,6 +22,11 @@ If not, see <https://www.gnu.org/licenses/>.
 from PyQt5.QtWidgets import (QWidget, QPushButton)
 from PyQt5.QtCore import pyqtSignal
 
+"""
+The EditAction is a base class for any custom dialogs. it contains an
+accept and cancel buttons, and will emit whether either has been pressed. 
+"""
+
 
 class EditAction(QWidget):
     acceptedAction = pyqtSignal()

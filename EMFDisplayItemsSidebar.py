@@ -26,6 +26,11 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QPushButton,
 from DisplayItemPicker import DisplayItemPicker
 from DisplayAttributeList import DisplayAttributeList
 
+"""
+The EMFDisplayItemsSidebar contains multiple Widgets designed to interact with
+DisplayItems and Layers of the EMFMap.
+"""
+
 
 class DisplayItemSidebar(QFrame):
     def __init__(self, map=None):
@@ -48,6 +53,13 @@ class DisplayItemSidebar(QFrame):
         self.diList.setMap(map)
         self.diAttributes.setMap(map)
         self.layerController.setMap(map)
+
+
+"""
+THe MapLayerController contains functionality to create and interact with
+different layers of an EMFMap. It can create new layers, shift between layers,
+and reorder the layers as well.
+"""
 
 
 class MapLayerController(QFrame):
@@ -96,6 +108,12 @@ class MapLayerController(QFrame):
         self.delLayerBtn.setEnabled(layerNum > 1)
         self.curLayerLabel.setText("L{}/{}".format(curIndex, layerNum))
         self.repaint()
+
+
+"""
+DisplayItemList is a widget displaying all DisplayItems in a given EMFMap. It
+allows for the creation, removal, reordering, and renaming of the given DIs. 
+"""
 
 
 class DisplayItemList(QFrame):
