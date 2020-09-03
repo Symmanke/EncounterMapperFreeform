@@ -3,6 +3,9 @@
 
 Encounter Mapper Freeform is a revamp of Encounter Mapper. Unlike its previous iteration, Freeform is no longer tied to developing tiles. Rather, the layout for the encounter is "drawn" through nodes, lines, and shapes, and properties are added on top of these underlying elements to display the map.
 
+## [Manual](https://github.com/Symmanke/EncounterMapperFreeform/blob/master/EMFManual.md)
+## Video Tutorial (TODO)
+
 ## **Current Features:**
 ![A seaside inn setting, recreated in ](res/EMF_Layout_Shapes.png)
 - "Map Out" your layout by creating nodes, lines, and faces in a UI similar to programs such as Blender
