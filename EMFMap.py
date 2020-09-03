@@ -262,12 +262,16 @@ class EMFMap(QObject):
             self.displayItemValuesUpdated.emit()
 
     def shiftDisplayItem(self, index, shiftUp):
+        def updateShiftedItemLayers(di):
+            for pi in di.getPropertyItems():
+                pi.ParentLayer().setNeedRedraw()
         if shiftUp:
             if index > 0:
                 shift = self.displayItems[index]
                 self.displayItems[index] = self.displayItems[index-1]
                 self.displayItems[index-1] = shift
                 self.selectedDI = index - 1
+                updateShiftedItemLayers(shift)
                 self.displayItemListUpdated.emit()
                 self.displayItemValuesUpdated.emit()
         else:
@@ -276,6 +280,7 @@ class EMFMap(QObject):
                 self.displayItems[index] = self.displayItems[index+1]
                 self.displayItems[index+1] = shift
                 self.selectedDI = index + 1
+                updateShiftedItemLayers(shift)
                 self.displayItemListUpdated.emit()
                 self.displayItemValuesUpdated.emit()
 

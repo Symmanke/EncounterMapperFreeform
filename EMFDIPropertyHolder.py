@@ -82,6 +82,9 @@ class DIPropertyHolder(QObject):
             values = self.diProperties[di]
         return values
 
+    def ParentLayer(self):
+        return self.parentLayer
+
     def indivAttributesJSON(self, diIndexes):
         properties = {}
         for di in self.diProperties:

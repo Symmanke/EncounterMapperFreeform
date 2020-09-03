@@ -244,6 +244,8 @@ class EMFNode(DIPropertyHolder):
         self.transforming = False
         self.nPoint.setX(self.tempX)
         self.nPoint.setY(self.tempY)
+        if self.parentLayer is not None:
+            self.parentLayer.setNeedRedraw()
 
     # Apply the selected transform
     def applyTransform(self):
