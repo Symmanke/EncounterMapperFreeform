@@ -66,4 +66,4 @@ The Display Item List contains all Display items in an encounter map. it allows 
 The Selected display items list displays the attribute values of a given display item. There are 2 types of values: Shared and Individual. Shared values affect every instance of the display item, while individual only affect the display items currently selected by the node editor. Each attribute has a different way to set its value.
 
 
-## Click here for a video tutorial (TODO)
+## Video Tutorial: [Part 1](https://youtu.be/bFfKhF5WtjE) [Part 2](https://youtu.be/5mvI_D_cwbA)
